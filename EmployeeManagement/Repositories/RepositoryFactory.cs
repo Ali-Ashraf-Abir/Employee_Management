@@ -17,7 +17,10 @@ public class RepositoryFactory : IRepositoryFactory
 
     public ILeaveTypeRepository CreateLeaveTypeRepository()
         => new LeaveTypeRepository(_db);
-
+    public ILeaveRequestRepository CreateLeaveRequestRepository()
+        => new LeaveRequestRepository(_db);
+    public IEmployeeLeaveBalanceRepository CreateEmployeeLeaveBalanceRepository()
+        => new EmployeeLeaveBalanceRepository(_db);
     public async Task<int> CommitAsync()
         => await _db.SaveChangesAsync();
 
