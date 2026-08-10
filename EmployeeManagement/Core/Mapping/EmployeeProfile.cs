@@ -21,7 +21,19 @@ public class EmployeeProfile : Profile
             .ForMember(
                 x => x.User,
                 opt => opt.Ignore());
-
+        CreateMap<EmployeeUpdateContract, Employee>()
+            .ForMember(
+                x => x.Id,
+                opt => opt.Ignore())
+            .ForMember(
+                x => x.UserId,
+                opt => opt.Ignore())
+            .ForMember(
+                x => x.JoinedAt,
+                opt => opt.Ignore())
+            .ForMember(
+                x => x.User,
+                opt => opt.Ignore());
         CreateMap<Employee, EmployeeContract>()
             .ForMember(
                 x => x.Password,

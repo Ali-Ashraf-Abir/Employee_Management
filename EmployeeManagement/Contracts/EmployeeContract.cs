@@ -6,6 +6,7 @@ namespace EmployeeManagement.Contracts;
 public class EmployeeContract
     : BaseContract<EmployeeContract, Employee>
 {
+    public Guid Id { get; set; }
     public string FirstName { get; set; } = null!;
 
     public string LastName { get; set; } = null!;

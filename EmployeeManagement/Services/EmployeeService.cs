@@ -26,7 +26,23 @@ public class EmployeeService : IEmployeeService
         _db = db;
         _mapper = mapper;
     }
-
+    public async Task<IEnumerable<EmployeeContract>> GetAllAsync()
+    {
+        var employees = await _employeeRepository.GetAllEmployeeAsync();
+        return employees.Select(
+            employee => EmployeeContract.ToContract(
+                employee,
+                _mapper));
+    }
+    public async Task<EmployeeContract?> GetByIdAsync(Guid id)
+    {
+        var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
+        if (employee == null)
+            return null;
+        return EmployeeContract.ToContract(
+            employee,
+            _mapper);
+    }
     public async Task<EmployeeContract> CreateAsync(
         EmployeeContract contract)
     {

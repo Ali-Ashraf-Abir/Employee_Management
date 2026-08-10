@@ -21,4 +21,19 @@ public class EmployeeRepository
             .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.UserId == userId);
     }
+    public async Task<List<Employee>> GetAllEmployeeAsync()
+    {
+        return await _collection
+            .Include(employee => employee.User)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<Employee?> GetEmployeeByIdAsync(Guid id)
+    {
+        return await _collection
+            .Include(employee => employee.User)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(employee => employee.Id == id);
+    }
 }

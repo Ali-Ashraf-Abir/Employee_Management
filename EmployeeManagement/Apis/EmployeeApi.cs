@@ -16,7 +16,24 @@ public class EmployeeApi : ControllerBase
     {
         _employeeService = employeeService;
     }
-
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var employees =
+            await _employeeService.GetAllAsync();
+        return Ok(employees);
+    }
+    [HttpGet]
+    [Route("{id:guid}")]
+    public async Task<IActionResult> GetById(
+        Guid id)
+    {
+        var employee =
+            await _employeeService.GetByIdAsync(id);
+        if (employee == null)
+            return NotFound();
+        return Ok(employee);
+    }
     [HttpPost]
     public async Task<IActionResult> Create(
         EmployeeContract contract)

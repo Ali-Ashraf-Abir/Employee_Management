@@ -5,4 +5,6 @@ public interface IEmployeeRepository
     : IBaseRepository<Employee>
 {
     Task<Employee?> GetByUserIdAsync(Guid userId);
+    Task<Employee?> GetEmployeeByIdAsync(Guid id);
+    Task<List<Employee>> GetAllEmployeeAsync();
 }

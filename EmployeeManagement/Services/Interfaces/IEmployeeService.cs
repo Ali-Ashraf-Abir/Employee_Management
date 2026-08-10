@@ -4,6 +4,8 @@ namespace EmployeeManagement.Services.Interfaces;
 
 public interface IEmployeeService
 {
+    Task<IEnumerable<EmployeeContract>> GetAllAsync();
+    Task<EmployeeContract?> GetByIdAsync(Guid id);
     Task<EmployeeContract> CreateAsync(
         EmployeeContract contract);
 
