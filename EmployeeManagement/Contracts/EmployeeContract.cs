@@ -18,4 +18,6 @@ public class EmployeeContract
     public string Department { get; set; } = null!;
 
     public string Position { get; set; } = null!;
+
+    public bool IsDisabled { get; set; }
 }

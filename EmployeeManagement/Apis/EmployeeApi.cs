@@ -7,7 +7,7 @@ namespace EmployeeManagement.Apis;
 
 [ApiController]
 [Route("api/admin/employees")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "AdminOnly")]
 public class EmployeeApi : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
@@ -28,8 +28,7 @@ public class EmployeeApi : ControllerBase
     public async Task<IActionResult> GetById(
         Guid id)
     {
-        var employee =
-            await _employeeService.GetByIdAsync(id);
+        var employee = await _employeeService.GetByIdAsync(id);
         if (employee == null)
             return NotFound();
         return Ok(employee);
@@ -38,9 +37,7 @@ public class EmployeeApi : ControllerBase
     public async Task<IActionResult> Create(
         EmployeeContract contract)
     {
-        var employee =
-            await _employeeService.CreateAsync(contract);
-
+        var employee = await _employeeService.CreateAsync(contract);
         return Ok(employee);
     }
 
@@ -49,11 +46,7 @@ public class EmployeeApi : ControllerBase
         Guid id,
         EmployeeUpdateContract contract)
     {
-        var employee =
-            await _employeeService.UpdateAsync(
-                id,
-                contract);
-
+        var employee =await _employeeService.UpdateAsync(id,contract);
         if (employee == null)
             return NotFound();
 
@@ -64,12 +57,23 @@ public class EmployeeApi : ControllerBase
     public async Task<IActionResult> Disable(
         Guid id)
     {
-        var result =
-            await _employeeService.DisableAsync(id);
+        var result = await _employeeService.DisableAsync(id);
 
         if (!result)
             return NotFound();
 
-        return NoContent();
+        return Ok();
     }
+    [HttpPatch("{id:guid}/enable")]
+    public async Task<IActionResult> Enable(Guid id)
+    {
+        var result = await _employeeService.EnableAsync(id);
+
+        if (!result)
+            return NotFound();
+
+        return Ok();
+    }
+
+
 }

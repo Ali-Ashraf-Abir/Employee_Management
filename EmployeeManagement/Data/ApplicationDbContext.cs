@@ -15,6 +15,9 @@ public class ApplicationDbContext
     }
 
     public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<LeaveType> LeaveTypes=> Set<LeaveType>();
+    public DbSet<EmployeeLeaveBalance> EmployeeLeaveBalances => Set<EmployeeLeaveBalance>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

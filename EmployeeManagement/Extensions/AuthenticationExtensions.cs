@@ -47,7 +47,13 @@ public static class AuthenticationExtensions
                         RoleClaimType = ClaimTypes.Role
                     };
             });
-
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly", policy =>
+            {
+                policy.RequireRole("Admin");
+            });
+        });
         return services;
     }
 }

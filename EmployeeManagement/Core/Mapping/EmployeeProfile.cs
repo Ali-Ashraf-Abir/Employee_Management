@@ -21,6 +21,7 @@ public class EmployeeProfile : Profile
             .ForMember(
                 x => x.User,
                 opt => opt.Ignore());
+      
         CreateMap<EmployeeUpdateContract, Employee>()
             .ForMember(
                 x => x.Id,
@@ -40,6 +41,11 @@ public class EmployeeProfile : Profile
                 opt => opt.Ignore())
             .ForMember(
                 x => x.Email,
-                opt => opt.MapFrom(x => x.User.Email));
+                opt => opt.MapFrom(x => x.User.Email))
+            .ForMember(
+                x => x.IsDisabled,
+                opt => opt.MapFrom(x =>
+                    x.User.LockoutEnd.HasValue &&
+                    x.User.LockoutEnd > DateTimeOffset.UtcNow));
     }
 }

@@ -2,6 +2,7 @@
 using EmployeeManagement.Contracts;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
+using EmployeeManagement.Repositories;
 using EmployeeManagement.Repositories.Interfaces;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -11,23 +12,22 @@ namespace EmployeeManagement.Services;
 public class EmployeeService : IEmployeeService
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IEmployeeRepository _employeeRepository;
     private readonly ApplicationDbContext _db;
     private readonly IMapper _mapper;
 
     public EmployeeService(
         UserManager<ApplicationUser> userManager,
-        IEmployeeRepository employeeRepository,
         ApplicationDbContext db,
         IMapper mapper)
     {
         _userManager = userManager;
-        _employeeRepository = employeeRepository;
         _db = db;
         _mapper = mapper;
     }
     public async Task<IEnumerable<EmployeeContract>> GetAllAsync()
     {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var _employeeRepository = factory.CreateEmployeeRepository();
         var employees = await _employeeRepository.GetAllEmployeeAsync();
         return employees.Select(
             employee => EmployeeContract.ToContract(
@@ -36,6 +36,8 @@ public class EmployeeService : IEmployeeService
     }
     public async Task<EmployeeContract?> GetByIdAsync(Guid id)
     {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var _employeeRepository = factory.CreateEmployeeRepository();
         var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
         if (employee == null)
             return null;
@@ -46,12 +48,14 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeContract> CreateAsync(
         EmployeeContract contract)
     {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var _employeeRepository = factory.CreateEmployeeRepository();
         await using var transaction =
             await _db.Database.BeginTransactionAsync();
 
         try
         {
-            // 1. Create Identity user
+            
             var user = new ApplicationUser
             {
                 UserName = contract.Email,
@@ -114,6 +118,8 @@ public class EmployeeService : IEmployeeService
     }
     public async Task<EmployeeContract?> UpdateAsync(Guid id,EmployeeUpdateContract contract)
     {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var _employeeRepository = factory.CreateEmployeeRepository();
         var employee = await _employeeRepository.GetByIdAsync(id);
 
         if (employee == null)
@@ -163,6 +169,8 @@ public class EmployeeService : IEmployeeService
     }
     public async Task<bool> DisableAsync(Guid id)
     {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var _employeeRepository = factory.CreateEmployeeRepository();
         var employee = await _employeeRepository.GetByIdAsync(id);
 
         if (employee == null)
@@ -190,6 +198,36 @@ public class EmployeeService : IEmployeeService
         result = await _userManager.SetLockoutEndDateAsync(
             user,
             DateTimeOffset.MaxValue);
+
+        if (!result.Succeeded)
+        {
+            throw new Exception(
+                string.Join(
+                    ", ",
+                    result.Errors.Select(
+                        x => x.Description)));
+        }
+
+        return true;
+    }
+    public async Task<bool> EnableAsync(Guid id)
+    {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var _employeeRepository = factory.CreateEmployeeRepository();
+        var employee = await _employeeRepository.GetByIdAsync(id);
+
+        if (employee == null)
+            return false;
+
+        var user = await _userManager.FindByIdAsync(
+            employee.UserId.ToString());
+
+        if (user == null)
+            return false;
+
+        var result = await _userManager.SetLockoutEndDateAsync(
+            user,
+            null);
 
         if (!result.Succeeded)
         {

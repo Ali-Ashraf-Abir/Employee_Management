@@ -14,4 +14,5 @@ public interface IEmployeeService
         EmployeeUpdateContract contract);
 
     Task<bool> DisableAsync(Guid id);
+    Task<bool> EnableAsync(Guid id);
 }
