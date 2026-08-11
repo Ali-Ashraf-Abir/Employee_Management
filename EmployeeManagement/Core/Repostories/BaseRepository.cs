@@ -94,7 +94,24 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity>
     {
         _collection.RemoveRange(entities);
     }
+    public IQueryable<TEntity> Query()
+    {
+        return _collection;
+    }
+    public async Task<PagedData<TEntity>> PaginateAsync(IQueryable<TEntity> query, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
 
+        return new PagedData<TEntity>
+        {
+            Items = items,
+            TotalCount = totalCount
+        };
+    }
     public async Task SaveChangesAsync()
     {
         await _db.SaveChangesAsync();

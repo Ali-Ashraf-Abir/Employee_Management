@@ -1,0 +1,19 @@
+﻿namespace EmployeeManagement.Core.Contracts;
+
+public class PaginationQuery
+{
+    private const int MaxPageSize = 100;
+
+    public int Page { get; set; } = 1;
+
+    private int _pageSize = 20;
+
+    public int PageSize
+    {
+        get => _pageSize;
+        set => _pageSize = Math.Min(value, MaxPageSize);
+    }
+
+    public string? Search { get; set; }
+}
+

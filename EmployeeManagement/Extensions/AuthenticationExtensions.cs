@@ -54,6 +54,13 @@ public static class AuthenticationExtensions
                 policy.RequireRole("Admin");
             });
         });
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOrHROnly", policy =>
+            {
+                policy.RequireRole("Admin", "HR");
+            });
+        });
         return services;
     }
 }

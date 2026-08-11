@@ -25,11 +25,18 @@ public static class ServiceExtensions
         services.AddScoped<
             IJwtService,
             JwtService>();
+
         services.AddScoped<
             ILeaveTypeService,
             LeaveTypeService>();
+
         services.AddScoped<
-            ILeaveRequestService, LeaveRequestService>();
+            ILeaveRequestService, 
+            LeaveRequestService>();
+
+        services.AddScoped<
+            IAttendanceService, 
+            AttendanceService>();
 
         return services;
     }

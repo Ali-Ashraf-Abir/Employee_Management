@@ -36,11 +36,10 @@ public class LeaveRequestProfile : Profile
             .ForMember(
                 x => x.LeaveType,
                 opt => opt.Ignore());
-
         CreateMap<LeaveRequest, LeaveRequestResponse>()
-            .ForMember(
-                x => x.LeaveTypeName,
-                opt => opt.MapFrom(
-                    x => x.LeaveType.Name));
+            .ForMember(dest => dest.EmployeeCode, opt => opt.MapFrom(src => src.Employee.EmployeeId))
+            .ForMember(dest => dest.EmployeeName, opt => opt.MapFrom(src => src.Employee.FirstName + " " + src.Employee.LastName))
+            .ForMember(dest => dest.EmployeeEmail, opt => opt.MapFrom(src => src.Employee.User.Email))
+            .ForMember(dest => dest.LeaveTypeName, opt => opt.MapFrom(src => src.LeaveType.Name));
     }
 }

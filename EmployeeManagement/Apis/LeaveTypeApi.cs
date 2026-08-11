@@ -7,7 +7,7 @@ namespace EmployeeManagement.Apis;
 
 [ApiController]
 [Route("api/admin/leave-types")]
-[Authorize(Policy = "AdminOnly")]
+[Authorize(Policy = "AdminOrHROnly")]
 public class LeaveTypeApi : ControllerBase
 {
     private readonly ILeaveTypeService _leaveTypeService;

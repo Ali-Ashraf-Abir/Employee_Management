@@ -1,11 +1,13 @@
 ﻿using AutoMapper;
 using EmployeeManagement.Contracts;
+using EmployeeManagement.Core.Contracts;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Repositories;
 using EmployeeManagement.Repositories.Interfaces;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Services;
 
@@ -24,15 +26,43 @@ public class EmployeeService : IEmployeeService
         _db = db;
         _mapper = mapper;
     }
-    public async Task<IEnumerable<EmployeeContract>> GetAllAsync()
+    public async Task<PagedResult<EmployeeContract>> GetAllAsync(PaginationQuery query)
     {
         using IRepositoryFactory factory = new RepositoryFactory(_db);
-        var _employeeRepository = factory.CreateEmployeeRepository();
-        var employees = await _employeeRepository.GetAllEmployeeAsync();
-        return employees.Select(
-            employee => EmployeeContract.ToContract(
-                employee,
-                _mapper));
+        var employeeRepository = factory.CreateEmployeeRepository();
+
+        var result = await employeeRepository.GetPagedAsync(query.Search, query.Page, query.PageSize);
+        var employees = result.Items.ToList();
+        var userIds = employees.Select(x => x.UserId).ToList();
+
+        var roleData = await (
+            from userRole in _db.UserRoles
+            join role in _db.Roles on userRole.RoleId equals role.Id
+            where userIds.Contains(userRole.UserId)
+            select new
+            {
+                userRole.UserId,
+                RoleName = role.Name!
+            })
+            .ToListAsync();
+
+        var contracts = employees.Select(employee =>
+        {
+            var contract = EmployeeContract.ToContract(employee, _mapper);
+            contract.Roles = roleData
+                .Where(x => x.UserId == employee.UserId)
+                .Select(x => x.RoleName)
+                .ToList();
+            return contract;
+        }).ToList();
+
+        return new PagedResult<EmployeeContract>
+        {
+            Items = contracts,
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalCount = result.TotalCount
+        };
     }
     public async Task<EmployeeContract?> GetByIdAsync(Guid id)
     {
@@ -95,7 +125,7 @@ public class EmployeeService : IEmployeeService
             employee.Id = Guid.NewGuid();
             employee.UserId = user.Id;
             employee.JoinedAt = DateTime.UtcNow;
-
+            employee.EmployeeId = $"EMP-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
             // 4. Add employee to EF
             await _employeeRepository.AddAsync(employee);
 
@@ -236,6 +266,53 @@ public class EmployeeService : IEmployeeService
                     ", ",
                     result.Errors.Select(
                         x => x.Description)));
+        }
+
+        return true;
+    }
+
+    public async Task<bool> UpdateRolesAsync(Guid employeeId, List<string> roles)
+    {
+        using IRepositoryFactory factory = new RepositoryFactory(_db);
+        var employeeRepository = factory.CreateEmployeeRepository();
+
+        var employee = await employeeRepository.GetByIdAsync(employeeId);
+
+        if (employee == null)
+            return false;
+
+        var user = await _userManager.FindByIdAsync(employee.UserId.ToString());
+
+        if (user == null)
+            return false;
+
+        if (!roles.Contains("Employee"))
+            roles.Add("Employee");
+
+        var existingRoles = await _userManager.GetRolesAsync(user);
+
+        var rolesToRemove = existingRoles
+            .Except(roles, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        var rolesToAdd = roles
+            .Except(existingRoles, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (rolesToRemove.Count > 0)
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+
+            if (!removeResult.Succeeded)
+                throw new Exception(string.Join(", ", removeResult.Errors.Select(x => x.Description)));
+        }
+
+        if (rolesToAdd.Count > 0)
+        {
+            var addResult = await _userManager.AddToRolesAsync(user, rolesToAdd);
+
+            if (!addResult.Succeeded)
+                throw new Exception(string.Join(", ", addResult.Errors.Select(x => x.Description)));
         }
 
         return true;

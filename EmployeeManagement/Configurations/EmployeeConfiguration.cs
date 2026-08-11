@@ -33,5 +33,8 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
 
         entity.HasIndex(e => e.UserId)
             .IsUnique();
+
+        entity.HasIndex(x => x.EmployeeId)
+        .IsUnique();
     }
 }

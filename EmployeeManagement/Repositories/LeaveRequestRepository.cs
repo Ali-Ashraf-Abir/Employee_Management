@@ -25,7 +25,27 @@ public class LeaveRequestRepository
             .OrderByDescending(x => x.CreatedAt)
             .ToListAsync();
     }
+    public async Task<PagedData<LeaveRequest>> GetPagedAsync(string? search, int page, int pageSize, CancellationToken cancellationToken = default)
+    {
+        IQueryable<LeaveRequest> query = _collection
+            .AsNoTracking()
+            .Include(x => x.Employee)
+            .ThenInclude(x => x.User)
+            .Include(x => x.LeaveType);
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+
+            query = query.Where(x =>
+                x.Employee.EmployeeId.Contains(search) ||
+                x.Employee.FirstName.Contains(search) ||
+                x.Employee.LastName.Contains(search) ||
+                x.Employee.User.Email!.Contains(search));
+        }
+
+        return await PaginateAsync(query, page, pageSize, cancellationToken);
+    }
     public async Task<LeaveRequest?> GetByIdAndEmployeeIdAsync(
         Guid id,
         Guid employeeId)

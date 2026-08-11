@@ -17,7 +17,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityR
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<LeaveType> LeaveTypes=> Set<LeaveType>();
     public DbSet<EmployeeLeaveBalance> EmployeeLeaveBalances => Set<EmployeeLeaveBalance>();
-
+    public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
     protected override void OnModelCreating(
         ModelBuilder builder)
     {

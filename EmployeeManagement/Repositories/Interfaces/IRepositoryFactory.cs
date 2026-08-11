@@ -10,5 +10,6 @@ public interface IRepositoryFactory : IDisposable
 
     ILeaveRequestRepository CreateLeaveRequestRepository();
     IEmployeeLeaveBalanceRepository CreateEmployeeLeaveBalanceRepository();
+    IAttendanceRepository CreateAttendanceRepository();
     Task<int> CommitAsync();
 }

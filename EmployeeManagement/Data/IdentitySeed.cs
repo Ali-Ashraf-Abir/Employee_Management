@@ -18,7 +18,8 @@ public static class IdentitySeeder
         string[] roles =
         [
             "Admin",
-            "Employee"
+            "Employee",
+            "HR"
         ];
 
         foreach (var role in roles)

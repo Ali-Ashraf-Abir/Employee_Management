@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using EmployeeManagement.Contracts;
+using EmployeeManagement.Core.Contracts;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Repositories;
 using EmployeeManagement.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Services;
 
@@ -93,7 +95,24 @@ public class LeaveRequestService : ILeaveRequestService
 
         return _mapper.Map<LeaveRequestResponse>(leaveRequest);
     }
+    public async Task<PagedResult<LeaveRequestResponse>> GetAllAsync(PaginationQuery query)
+    {
+        using var factory = new RepositoryFactory(_db);
+        var leaveRequestRepository = factory.CreateLeaveRequestRepository();
 
+        var result = await leaveRequestRepository.GetPagedAsync(
+            query.Search,
+            query.Page,
+            query.PageSize);
+
+        return new PagedResult<LeaveRequestResponse>
+        {
+            Items = _mapper.Map<IEnumerable<LeaveRequestResponse>>(result.Items),
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalCount = result.TotalCount
+        };
+    }
     public async Task<LeaveRequestResponse?> GetByIdAsync(
         Guid userId,
         Guid id)
@@ -119,11 +138,9 @@ public class LeaveRequestService : ILeaveRequestService
         return _mapper.Map<LeaveRequestResponse>(leaveRequest);
     }
 
-    public async Task<IEnumerable<LeaveRequestResponse>> GetMineAsync(
-        Guid userId)
+    public async Task<PagedResult<LeaveRequestResponse>> GetMineAsync(Guid userId, PaginationQuery query)
     {
         using var factory = new RepositoryFactory(_db);
-
         var employeeRepository = factory.CreateEmployeeRepository();
         var leaveRequestRepository = factory.CreateLeaveRequestRepository();
 
@@ -132,10 +149,34 @@ public class LeaveRequestService : ILeaveRequestService
         if (employee == null)
             throw new Exception("Employee not found.");
 
-        var requests = await leaveRequestRepository.GetByEmployeeIdAsync(
-            employee.Id);
+        var requests = leaveRequestRepository.Query()
+            .Where(x => x.EmployeeId == employee.Id);
 
-        return _mapper.Map<IEnumerable<LeaveRequestResponse>>(requests);
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var search = query.Search.Trim();
+
+            requests = requests.Where(x =>
+                x.Employee.EmployeeId.Contains(search) ||
+                x.Employee.FirstName.Contains(search) ||
+                x.Employee.LastName.Contains(search));
+        }
+
+        var totalCount = await requests.CountAsync();
+
+        var results = await requests
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
+
+        return new PagedResult<LeaveRequestResponse>
+        {
+            Items = _mapper.Map<IEnumerable<LeaveRequestResponse>>(results),
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalCount = totalCount
+        };
     }
 
     public async Task<LeaveRequestResponse?> UpdateAsync(

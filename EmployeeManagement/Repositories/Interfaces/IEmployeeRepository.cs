@@ -1,4 +1,5 @@
-﻿using EmployeeManagement.Core.Repositories.Interfaces;
+﻿using EmployeeManagement.Core.Repositories;
+using EmployeeManagement.Core.Repositories.Interfaces;
 using EmployeeManagement.Models;
 namespace EmployeeManagement.Repositories.Interfaces;
 public interface IEmployeeRepository
@@ -6,5 +7,5 @@ public interface IEmployeeRepository
 {
     Task<Employee?> GetByUserIdAsync(Guid userId);
     Task<Employee?> GetEmployeeByIdAsync(Guid id);
-    Task<List<Employee>> GetAllEmployeeAsync();
+    Task<PagedData<Employee>> GetPagedAsync(string? search, int page, int pageSize, CancellationToken cancellationToken = default);
 }

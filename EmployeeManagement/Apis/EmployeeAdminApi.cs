@@ -1,4 +1,5 @@
 ﻿using EmployeeManagement.Contracts;
+using EmployeeManagement.Core.Contracts;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -7,20 +8,20 @@ namespace EmployeeManagement.Apis;
 
 [ApiController]
 [Route("api/admin/employees")]
-[Authorize(Policy = "AdminOnly")]
-public class EmployeeApi : ControllerBase
+[Authorize(Policy = "AdminOrHROnly")]
+public class EmployeeAdminApi : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
 
-    public EmployeeApi(IEmployeeService employeeService)
+    public EmployeeAdminApi(IEmployeeService employeeService)
     {
         _employeeService = employeeService;
     }
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query)
     {
-        var employees =
-            await _employeeService.GetAllAsync();
+        var employees = await _employeeService.GetAllAsync(query);
+
         return Ok(employees);
     }
     [HttpGet]
@@ -73,6 +74,16 @@ public class EmployeeApi : ControllerBase
             return NotFound();
 
         return Ok();
+    }
+    [HttpPut("{id:guid}/roles")]
+    public async Task<IActionResult> UpdateRoles(Guid id, UpdateUserRolesContract contract)
+    {
+        var result = await _employeeService.UpdateRolesAsync(id, contract.Roles);
+
+        if (!result)
+            return NotFound();
+
+        return NoContent();
     }
 
 

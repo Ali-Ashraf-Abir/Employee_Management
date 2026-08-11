@@ -1,4 +1,5 @@
 ﻿using EmployeeManagement.Contracts;
+using EmployeeManagement.Core.Contracts;
 using EmployeeManagement.Services;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -22,14 +23,10 @@ public class LeaveRequestApi : ControllerBase
 
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> GetMine()
+    public async Task<IActionResult> GetMine([FromQuery] PaginationQuery query)
     {
         var userId = GetUserId();
-
-        var requests =
-            await _leaveRequestService.GetMineAsync(
-                userId);
-
+        var requests = await _leaveRequestService.GetMineAsync(userId, query);
         return Ok(requests);
     }
 
@@ -85,8 +82,17 @@ public class LeaveRequestApi : ControllerBase
         return Ok(request);
     }
 
+    //admin only routes
+
+    [HttpGet("all")]
+    [Authorize(Policy = "AdminOrHROnly")]
+    public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query)
+    {
+        var requests = await _leaveRequestService.GetAllAsync(query);
+        return Ok(requests);
+    }
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = GetUserId();
@@ -101,20 +107,9 @@ public class LeaveRequestApi : ControllerBase
 
         return NoContent();
     }
-    [Authorize(Policy = "AdminOnly")]
-    private Guid GetUserId()
-    {
-        var value =
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
 
-        if (!Guid.TryParse(value, out var userId))
-            throw new UnauthorizedAccessException();
-
-        return userId;
-    }
     [HttpPut("{id:guid}/approve")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Approve(Guid id)
     {
         var adminId = Guid.Parse(
@@ -132,7 +127,7 @@ public class LeaveRequestApi : ControllerBase
     }
 
     [HttpPut("{id:guid}/reject")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Reject(Guid id)
     {
         var adminId = Guid.Parse(
@@ -147,5 +142,17 @@ public class LeaveRequestApi : ControllerBase
             return NotFound();
 
         return NoContent();
+    }
+
+    private Guid GetUserId()
+    {
+        var value =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+        if (!Guid.TryParse(value, out var userId))
+            throw new UnauthorizedAccessException();
+
+        return userId;
     }
 }
