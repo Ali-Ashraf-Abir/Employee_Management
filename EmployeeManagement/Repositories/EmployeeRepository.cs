@@ -1,7 +1,7 @@
 ﻿using EmployeeManagement.Core.Repositories;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
-using EmployeeManagement.Repositories.Interfaces;
+using EmployeeManagement.Models.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Repositories;

@@ -13,13 +13,15 @@ public class LeaveRequestService : ILeaveRequestService
 {
     private readonly ApplicationDbContext _db;
     private readonly IMapper _mapper;
-
+    private readonly ILeaveBalanceService _leaveBalanceService;
     public LeaveRequestService(
         ApplicationDbContext db,
-        IMapper mapper)
+        IMapper mapper,
+        ILeaveBalanceService leaveBalanceService)
     {
         _db = db;
         _mapper = mapper;
+        _leaveBalanceService = leaveBalanceService;
     }
 
     public async Task<LeaveRequestResponse> CreateAsync(
@@ -57,22 +59,7 @@ public class LeaveRequestService : ILeaveRequestService
 
         var year = contract.StartDate.Year;
 
-        var balance = await balanceRepository.GetAsync(
-            employee.Id,
-            leaveType.Id,
-            year);
-
-        var consumedDays = balance?.ConsumedDays ?? 0;
-
-        var pendingDays = await leaveRequestRepository.GetPendingDaysAsync(
-            employee.Id,
-            leaveType.Id,
-            year);
-
-        var availableDays =
-            leaveType.AnnualLimit -
-            consumedDays -
-            pendingDays;
+        var availableDays = await _leaveBalanceService.GetAvailableDaysAsync(employee.Id, leaveType.Id, year);
 
         if (days > availableDays)
         {
@@ -227,23 +214,7 @@ public class LeaveRequestService : ILeaveRequestService
 
         var year = contract.StartDate.Year;
 
-        var balance = await balanceRepository.GetAsync(
-            employee.Id,
-            leaveType.Id,
-            year);
-
-        var consumedDays = balance?.ConsumedDays ?? 0;
-
-        var pendingDays = await leaveRequestRepository.GetPendingDaysAsync(
-            employee.Id,
-            leaveType.Id,
-            year,
-            leaveRequest.Id);
-
-        var availableDays =
-            leaveType.AnnualLimit -
-            consumedDays -
-            pendingDays;
+        var availableDays = await _leaveBalanceService.GetAvailableDaysAsync(employee.Id, leaveType.Id, year, leaveRequest.Id);
 
         if (days > availableDays)
         {
@@ -289,7 +260,8 @@ public class LeaveRequestService : ILeaveRequestService
             throw new Exception(
                 "Reviewed leave requests cannot be deleted.");
 
-        leaveRequestRepository.Delete(leaveRequest);
+        leaveRequest.IsDeleted = true;
+
         await leaveRequestRepository.SaveChangesAsync();
 
         return true;
@@ -381,19 +353,15 @@ public class LeaveRequestService : ILeaveRequestService
     {
         using var factory = new RepositoryFactory(_db);
 
-        var leaveRequestRepository =
-            factory.CreateLeaveRequestRepository();
+        var leaveRequestRepository =factory.CreateLeaveRequestRepository();
 
-        var leaveRequest =
-            await leaveRequestRepository.GetByIdAsync(
-                leaveRequestId);
+        var leaveRequest =await leaveRequestRepository.GetByIdAsync(leaveRequestId);
 
         if (leaveRequest == null)
             return false;
 
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new Exception(
-                "Only pending leave requests can be rejected.");
+            throw new Exception("Only pending leave requests can be rejected.");
 
         leaveRequest.Status = LeaveStatus.Rejected;
         leaveRequest.ReviewedAt = DateTime.UtcNow;
@@ -404,5 +372,59 @@ public class LeaveRequestService : ILeaveRequestService
         await leaveRequestRepository.SaveChangesAsync();
 
         return true;
+    }
+
+    public async Task<List<LeaveBalanceResponse>> GetMyBalancesAsync(
+    Guid userId,
+    int year)
+    {
+        using var factory = new RepositoryFactory(_db);
+
+        var employeeRepository = factory.CreateEmployeeRepository();
+        var leaveTypeRepository = factory.CreateLeaveTypeRepository();
+        var balanceRepository = factory.CreateEmployeeLeaveBalanceRepository();
+        var leaveRequestRepository = factory.CreateLeaveRequestRepository();
+
+        var employee = await employeeRepository.GetByUserIdAsync(userId);
+
+        if (employee == null)
+            throw new Exception("Employee not found.");
+
+        var leaveTypes = await leaveTypeRepository.GetActiveAsync();
+
+        var result = new List<LeaveBalanceResponse>();
+
+        foreach (var leaveType in leaveTypes)
+        {
+            var balance = await balanceRepository.GetAsync(
+                employee.Id,
+                leaveType.Id,
+                year);
+
+            var consumedDays = balance?.ConsumedDays ?? 0;
+
+            var pendingDays =
+                await leaveRequestRepository.GetPendingDaysAsync(
+                    employee.Id,
+                    leaveType.Id,
+                    year);
+
+            var remainingDays =
+                leaveType.AnnualLimit -
+                consumedDays -
+                pendingDays;
+
+            result.Add(new LeaveBalanceResponse
+            {
+                LeaveTypeId = leaveType.Id,
+                LeaveTypeName = leaveType.Name,
+                AnnualLimit = leaveType.AnnualLimit,
+                ConsumedDays = consumedDays,
+                PendingDays = pendingDays,
+                RemainingDays = Math.Max(remainingDays, 0)
+            });
+        }
+
+        return result;
     }
 }

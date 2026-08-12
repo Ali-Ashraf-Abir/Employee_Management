@@ -14,11 +14,15 @@ namespace EmployeeManagement.Apis;
 public class LeaveRequestApi : ControllerBase
 {
     private readonly ILeaveRequestService _leaveRequestService;
+    private readonly ILeaveBalanceService _leaveBalanceService;
 
     public LeaveRequestApi(
-        ILeaveRequestService leaveRequestService)
+        ILeaveRequestService leaveRequestService,
+        ILeaveBalanceService leaveBalanceService)
     {
         _leaveRequestService = leaveRequestService;
+
+        _leaveBalanceService = leaveBalanceService;
     }
 
     [HttpGet]
@@ -46,7 +50,16 @@ public class LeaveRequestApi : ControllerBase
 
         return Ok(request);
     }
+    [HttpGet("my-balances")]
+    public async Task<ActionResult<List<LeaveBalanceResponse>>> GetMyBalances([FromQuery] int? year)
+    {
+        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var selectedYear = year ?? DateTime.UtcNow.Year;
 
+        var result = await _leaveBalanceService.GetMyBalancesAsync(userId, selectedYear);
+
+        return Ok(result);
+    }
     [HttpPost]
     [Authorize]
     public async Task<IActionResult> Create(
@@ -81,18 +94,7 @@ public class LeaveRequestApi : ControllerBase
 
         return Ok(request);
     }
-
-    //admin only routes
-
-    [HttpGet("all")]
-    [Authorize(Policy = "AdminOrHROnly")]
-    public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query)
-    {
-        var requests = await _leaveRequestService.GetAllAsync(query);
-        return Ok(requests);
-    }
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = GetUserId();
@@ -107,6 +109,16 @@ public class LeaveRequestApi : ControllerBase
 
         return NoContent();
     }
+    //admin only routes
+
+    [HttpGet("all")]
+    [Authorize(Policy = "AdminOrHROnly")]
+    public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query)
+    {
+        var requests = await _leaveRequestService.GetAllAsync(query);
+        return Ok(requests);
+    }
+
 
     [HttpPut("{id:guid}/approve")]
     [Authorize(Policy = "AdminOrHROnly")]

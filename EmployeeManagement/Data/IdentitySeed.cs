@@ -9,7 +9,7 @@ public static class IdentitySeeder
     public static async Task SeedAsync(IServiceProvider services)
     {
         var roleManager =
-            services.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
+            services.GetRequiredService<RoleManager<ApplicationRole>>();
 
         var userManager =
             services.GetRequiredService<UserManager<ApplicationUser>>();
@@ -19,7 +19,8 @@ public static class IdentitySeeder
         [
             "Admin",
             "Employee",
-            "HR"
+            "HR",
+            "Engineer"
         ];
 
         foreach (var role in roles)
@@ -27,9 +28,11 @@ public static class IdentitySeeder
             if (!await roleManager.RoleExistsAsync(role))
             {
                 var result = await roleManager.CreateAsync(
-                    new IdentityRole<Guid>
+                    new ApplicationRole
                     {
-                        Name = role
+                        Name = role,
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
                     });
 
                 if (!result.Succeeded)

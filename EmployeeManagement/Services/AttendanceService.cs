@@ -65,7 +65,6 @@ public class AttendanceService : IAttendanceService
 
         attendance.LeftAt = DateTime.UtcNow;
 
-        attendanceRepository.Update(attendance);
         await attendanceRepository.SaveChangesAsync();
 
         attendance.Employee = employee;
@@ -88,7 +87,7 @@ public class AttendanceService : IAttendanceService
 
         return new PagedResult<AttendanceResponse>
         {
-            Items = _mapper.Map<IEnumerable<AttendanceResponse>>(result.Items),
+            Items = result.Items,
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = result.TotalCount

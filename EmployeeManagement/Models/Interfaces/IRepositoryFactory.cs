@@ -1,6 +1,4 @@
-﻿using EmployeeManagement.Repositories.Interfaces;
-
-namespace EmployeeManagement.Repositories;
+﻿namespace EmployeeManagement.Models.Interfaces;
 
 public interface IRepositoryFactory : IDisposable
 {

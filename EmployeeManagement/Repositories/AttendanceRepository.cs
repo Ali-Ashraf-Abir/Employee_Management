@@ -2,37 +2,27 @@
 using EmployeeManagement.Core.Repositories;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
-using EmployeeManagement.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
+
 
 namespace EmployeeManagement.Repositories;
 
 public class AttendanceRepository : BaseRepository<AttendanceRecord>, IAttendanceRepository
 {
-    public AttendanceRepository(ApplicationDbContext db)
-        : base(db)
+    public AttendanceRepository(ApplicationDbContext db) : base(db)
     {
     }
 
     public async Task<AttendanceRecord?> GetOpenRecordAsync(Guid employeeId)
     {
-        return await _collection
-            .Include(x => x.Employee)
-            .ThenInclude(x => x.User)
-            .FirstOrDefaultAsync(x =>
-                x.EmployeeId == employeeId &&
-                x.LeftAt == null);
+        return await _collection.FirstOrDefaultAsync(x =>
+            x.EmployeeId == employeeId &&
+            x.LeftAt == null);
     }
 
-    public async Task<PagedData<AttendanceRecord>> GetHistoryAsync(
-        Guid? employeeId,
-        AttendanceQuery query,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedData<AttendanceResponse>> GetHistoryAsync(Guid? employeeId, AttendanceQuery query, CancellationToken cancellationToken = default)
     {
-        IQueryable<AttendanceRecord> records = _collection
-            .AsNoTracking()
-            .Include(x => x.Employee)
-            .ThenInclude(x => x.User);
+        IQueryable<AttendanceRecord> records = _collection.AsNoTracking();
 
         if (employeeId.HasValue)
             records = records.Where(x => x.EmployeeId == employeeId.Value);
@@ -49,31 +39,37 @@ public class AttendanceRepository : BaseRepository<AttendanceRecord>, IAttendanc
         }
 
         if (query.From.HasValue)
-            records = records.Where(x => x.EnteredAt >= query.From.Value.Date);
+        {
+            var fromUtc = ConvertDhakaDateToUtc(query.From.Value.Date);
+            records = records.Where(x => x.EnteredAt >= fromUtc);
+        }
 
         if (query.To.HasValue)
         {
-            var end = query.To.Value.Date.AddDays(1);
-            records = records.Where(x => x.EnteredAt < end);
+            var toUtc = ConvertDhakaDateToUtc(query.To.Value.Date.AddDays(1));
+            records = records.Where(x => x.EnteredAt < toUtc);
         }
 
-        records = records.OrderByDescending(x => x.EnteredAt);
+        var projected = records
+            .OrderByDescending(x => x.EnteredAt)
+            .ThenByDescending(x => x.Id)
+            .Select(x => new AttendanceResponse
+            {
+                Id = x.Id,
+                EmployeeId = x.EmployeeId,
+                EmployeeCode = x.Employee.EmployeeId,
+                EmployeeName = x.Employee.FirstName + " " + x.Employee.LastName,
+                EnteredAt = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(x.EnteredAt, "Asia/Dhaka"),
+                LeftAt = x.LeftAt.HasValue
+                    ? TimeZoneInfo.ConvertTimeBySystemTimeZoneId(x.LeftAt.Value, "Asia/Dhaka")
+                    : null
+            });
 
-        return await PaginateAsync(
-            records,
-            query.Page,
-            query.PageSize,
-            cancellationToken);
+        return await PaginateAsync(projected, query.Page, query.PageSize, cancellationToken);
     }
-
-    public async Task<PagedData<AttendanceDailyResponse>> GetDailyReportAsync(
-        AttendanceQuery query,
-        CancellationToken cancellationToken = default)
+    public async Task<PagedData<AttendanceDailyData>> GetDailyReportAsync(AttendanceQuery query, CancellationToken cancellationToken = default)
     {
-        IQueryable<AttendanceRecord> records = _collection
-            .AsNoTracking()
-            .Include(x => x.Employee)
-            .ThenInclude(x => x.User);
+        IQueryable<AttendanceRecord> records = _collection.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
@@ -87,12 +83,15 @@ public class AttendanceRepository : BaseRepository<AttendanceRecord>, IAttendanc
         }
 
         if (query.From.HasValue)
-            records = records.Where(x => x.EnteredAt >= query.From.Value.Date);
+        {
+            var fromUtc = ConvertDhakaDateToUtc(query.From.Value.Date);
+            records = records.Where(x => x.EnteredAt >= fromUtc);
+        }
 
         if (query.To.HasValue)
         {
-            var end = query.To.Value.Date.AddDays(1);
-            records = records.Where(x => x.EnteredAt < end);
+            var toUtc = ConvertDhakaDateToUtc(query.To.Value.Date.AddDays(1));
+            records = records.Where(x => x.EnteredAt < toUtc);
         }
 
         var grouped = records
@@ -102,20 +101,25 @@ public class AttendanceRepository : BaseRepository<AttendanceRecord>, IAttendanc
                 EmployeeCode = x.Employee.EmployeeId,
                 x.Employee.FirstName,
                 x.Employee.LastName,
-                Date = x.EnteredAt.Date
+                Date = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(x.EnteredAt, "Asia/Dhaka").Date
             })
-            .Select(x => new AttendanceDailyResponse
+            .Select(x => new AttendanceDailyData
             {
                 EmployeeId = x.Key.EmployeeId,
                 EmployeeCode = x.Key.EmployeeCode,
                 EmployeeName = x.Key.FirstName + " " + x.Key.LastName,
                 Date = x.Key.Date,
-                FirstEntry = x.Min(r => r.EnteredAt),
-                LastExit = x.Max(r => r.LeftAt),
-                TotalMinutes = x.Sum(r =>
-                    r.LeftAt.HasValue
-                        ? (int)(r.LeftAt.Value - r.EnteredAt).TotalMinutes
-                        : 0),
+                FirstEntry = TimeZoneInfo.ConvertTimeBySystemTimeZoneId(
+                    x.Min(r => r.EnteredAt),
+                    "Asia/Dhaka"),
+                LastExit = x.Max(r => r.LeftAt) != null
+                    ? TimeZoneInfo.ConvertTimeBySystemTimeZoneId(
+                        x.Max(r => r.LeftAt)!.Value,
+                        "Asia/Dhaka")
+                    : null,
+                TotalMinutes = x
+                    .Where(r => r.LeftAt.HasValue)
+                    .Sum(r => (int)(r.LeftAt!.Value - r.EnteredAt).TotalMinutes),
                 IsCurrentlyInside = x.Any(r => r.LeftAt == null)
             });
 
@@ -128,10 +132,16 @@ public class AttendanceRepository : BaseRepository<AttendanceRecord>, IAttendanc
             .Take(query.PageSize)
             .ToListAsync(cancellationToken);
 
-        return new PagedData<AttendanceDailyResponse>
+        return new PagedData<AttendanceDailyData>
         {
             Items = items,
             TotalCount = totalCount
         };
+    }
+    private static DateTime ConvertDhakaDateToUtc(DateTime date)
+    {
+        var dhaka = TimeZoneInfo.FindSystemTimeZoneById("Asia/Dhaka");
+        var unspecified = DateTime.SpecifyKind(date, DateTimeKind.Unspecified);
+        return TimeZoneInfo.ConvertTimeToUtc(unspecified, dhaka);
     }
 }

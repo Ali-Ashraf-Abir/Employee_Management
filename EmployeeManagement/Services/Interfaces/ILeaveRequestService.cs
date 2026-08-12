@@ -11,4 +11,5 @@ public interface ILeaveRequestService
     Task<bool> ApproveAsync(Guid adminId,Guid leaveRequestId);
     Task<PagedResult<LeaveRequestResponse>> GetAllAsync(PaginationQuery query);
     Task<bool> RejectAsync(Guid adminId,Guid leaveRequestId);
+    Task<List<LeaveBalanceResponse>> GetMyBalancesAsync(Guid userId,int year);
 }

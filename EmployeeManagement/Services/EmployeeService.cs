@@ -3,8 +3,8 @@ using EmployeeManagement.Contracts;
 using EmployeeManagement.Core.Contracts;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
+using EmployeeManagement.Models.Interfaces;
 using EmployeeManagement.Repositories;
-using EmployeeManagement.Repositories.Interfaces;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -16,15 +16,17 @@ public class EmployeeService : IEmployeeService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ApplicationDbContext _db;
     private readonly IMapper _mapper;
-
+    private readonly EmployeeIdGenerator _employeeIdGenerator;
     public EmployeeService(
         UserManager<ApplicationUser> userManager,
         ApplicationDbContext db,
+        EmployeeIdGenerator employeeIdGenerator,
         IMapper mapper)
     {
         _userManager = userManager;
         _db = db;
         _mapper = mapper;
+        _employeeIdGenerator = employeeIdGenerator;
     }
     public async Task<PagedResult<EmployeeContract>> GetAllAsync(PaginationQuery query)
     {
@@ -125,7 +127,7 @@ public class EmployeeService : IEmployeeService
             employee.Id = Guid.NewGuid();
             employee.UserId = user.Id;
             employee.JoinedAt = DateTime.UtcNow;
-            employee.EmployeeId = $"EMP-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+            employee.EmployeeId = _employeeIdGenerator.Generate();
             // 4. Add employee to EF
             await _employeeRepository.AddAsync(employee);
 

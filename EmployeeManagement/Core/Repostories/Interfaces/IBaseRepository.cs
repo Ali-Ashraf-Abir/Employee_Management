@@ -18,6 +18,6 @@ public interface IBaseRepository<TEntity>
     void UpdateRange(IEnumerable<TEntity> entities);
     void Delete(TEntity entity);
     void DeleteRange(IEnumerable<TEntity> entities);
-    Task<PagedData<TEntity>> PaginateAsync(IQueryable<TEntity> query, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<PagedData<TResult>> PaginateAsync<TResult>(IQueryable<TResult> query, int page, int pageSize, CancellationToken cancellationToken = default);
     Task SaveChangesAsync();
 }

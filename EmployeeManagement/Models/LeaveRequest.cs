@@ -27,4 +27,6 @@ public class LeaveRequest
     public Employee Employee { get; set; } = null!;
 
     public LeaveType LeaveType { get; set; } = null!;
+
+    public bool IsDeleted { get; set; } = false;
 }

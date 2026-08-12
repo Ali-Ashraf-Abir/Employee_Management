@@ -1,7 +1,7 @@
 ﻿using EmployeeManagement.Core.Repositories;
 using EmployeeManagement.Core.Repositories.Interfaces;
 using EmployeeManagement.Models;
-namespace EmployeeManagement.Repositories.Interfaces;
+namespace EmployeeManagement.Models.Interfaces;
 public interface IEmployeeRepository
     : IBaseRepository<Employee>
 {

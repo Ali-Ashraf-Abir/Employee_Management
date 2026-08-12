@@ -1,5 +1,5 @@
-﻿using EmployeeManagement.Repositories;
-using EmployeeManagement.Repositories.Interfaces;
+﻿using EmployeeManagement.Models.Interfaces;
+using EmployeeManagement.Repositories;
 using EmployeeManagement.Services;
 using EmployeeManagement.Services.Interfaces;
 
@@ -37,7 +37,11 @@ public static class ServiceExtensions
         services.AddScoped<
             IAttendanceService, 
             AttendanceService>();
-
+        services.AddScoped<
+            ILeaveBalanceService, 
+            LeaveBalanceService>();
+        services.AddScoped< 
+            EmployeeIdGenerator>();
         return services;
     }
 }

@@ -6,7 +6,6 @@ using EmployeeManagement.Models;
 public interface IAttendanceRepository : IBaseRepository<AttendanceRecord>
 {
     Task<AttendanceRecord?> GetOpenRecordAsync(Guid employeeId);
-    Task<PagedData<AttendanceRecord>> GetHistoryAsync(Guid? employeeId, AttendanceQuery query, CancellationToken cancellationToken = default);
-    Task<PagedData<AttendanceDailyResponse>> GetDailyReportAsync(AttendanceQuery query, CancellationToken cancellationToken = default);
-
+    Task<PagedData<AttendanceResponse>> GetHistoryAsync(Guid? employeeId, AttendanceQuery query, CancellationToken cancellationToken = default);
+    Task<PagedData<AttendanceDailyData>> GetDailyReportAsync(AttendanceQuery query, CancellationToken cancellationToken = default);
 }

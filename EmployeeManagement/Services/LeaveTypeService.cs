@@ -2,6 +2,7 @@
 using EmployeeManagement.Contracts;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
+using EmployeeManagement.Models.Interfaces;
 using EmployeeManagement.Repositories;
 using EmployeeManagement.Services.Interfaces;
 

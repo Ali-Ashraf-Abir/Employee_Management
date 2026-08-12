@@ -1,7 +1,7 @@
 ﻿using EmployeeManagement.Core.Repositories;
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
-using EmployeeManagement.Repositories.Interfaces;
+using EmployeeManagement.Models.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Repositories;
@@ -14,7 +14,13 @@ public class LeaveTypeRepository
         : base(db)
     {
     }
-
+    public async Task<List<LeaveType>> GetActiveAsync()
+    {
+        return await _collection
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+    }
     public async Task<LeaveType?> GetByNameAsync(
         string name)
     {

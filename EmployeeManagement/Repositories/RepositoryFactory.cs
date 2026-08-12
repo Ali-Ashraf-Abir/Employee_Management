@@ -1,5 +1,5 @@
 ﻿using EmployeeManagement.Data;
-using EmployeeManagement.Repositories.Interfaces;
+using EmployeeManagement.Models.Interfaces;
 
 namespace EmployeeManagement.Repositories;
 
