@@ -1,0 +1,107 @@
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-heading {
+    margin-bottom: 28px;
+}
+
+.page-heading h1 {
+    margin: 0;
+    color: #172033;
+    font-size: 25px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+
+.page-heading p {
+    margin: 7px 0 0;
+    color: #788294;
+    font-size: 13px;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.dashboard-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 140px;
+    padding: 20px;
+    background: white;
+    border: 1px solid #e3e7ee;
+    border-radius: 10px;
+}
+
+.dashboard-card-label {
+    color: #687386;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.dashboard-card strong {
+    margin-top: 17px;
+    color: #172033;
+    font-size: 25px;
+    font-weight: 650;
+}
+
+.dashboard-card-description {
+    margin-top: auto;
+    color: #9aa2af;
+    font-size: 11px;
+}
+
+.dashboard-section {
+    margin-top: 24px;
+    padding: 24px;
+    background: white;
+    border: 1px solid #e3e7ee;
+    border-radius: 10px;
+}
+
+.section-heading h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.section-heading p {
+    margin: 5px 0 0;
+    color: #8a93a2;
+    font-size: 12px;
+}
+
+.empty-state {
+    padding: 55px 20px;
+    text-align: center;
+}
+
+.empty-state h3 {
+    margin: 0;
+    color: #4b5668;
+    font-size: 14px;
+}
+
+.empty-state p {
+    margin: 7px 0 0;
+    color: #929aa8;
+    font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}

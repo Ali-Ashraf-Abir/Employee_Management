@@ -14,5 +14,7 @@ public class EmployeeContract : BaseContract<EmployeeContract, Employee>
     public string Department { get; set; } = null!;
     public string Position { get; set; } = null!;
     public bool IsDisabled { get; set; }
+
+    public DateTime JoinedAt { get; set; }
     public IList<string> Roles { get; set; } = [];
 }

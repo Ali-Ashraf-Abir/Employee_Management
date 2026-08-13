@@ -7,7 +7,7 @@ using EmployeeManagement.Models.Interfaces;
 using EmployeeManagement.Repositories;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+
 
 namespace EmployeeManagement.Services;
 
@@ -33,28 +33,20 @@ public class EmployeeService : IEmployeeService
         using IRepositoryFactory factory = new RepositoryFactory(_db);
         var employeeRepository = factory.CreateEmployeeRepository();
 
-        var result = await employeeRepository.GetPagedAsync(query.Search, query.Page, query.PageSize);
+        var result = await employeeRepository.GetPagedAsync(
+            query.Search,
+            query.Page,
+            query.PageSize);
+
         var employees = result.Items.ToList();
         var userIds = employees.Select(x => x.UserId).ToList();
 
-        var roleData = await (
-            from userRole in _db.UserRoles
-            join role in _db.Roles on userRole.RoleId equals role.Id
-            where userIds.Contains(userRole.UserId)
-            select new
-            {
-                userRole.UserId,
-                RoleName = role.Name!
-            })
-            .ToListAsync();
+        var roleData = await employeeRepository.GetRolesByUserIdsAsync(userIds);
 
         var contracts = employees.Select(employee =>
         {
             var contract = EmployeeContract.ToContract(employee, _mapper);
-            contract.Roles = roleData
-                .Where(x => x.UserId == employee.UserId)
-                .Select(x => x.RoleName)
-                .ToList();
+            contract.Roles = roleData.GetValueOrDefault(employee.UserId, []);
             return contract;
         }).ToList();
 
@@ -69,13 +61,20 @@ public class EmployeeService : IEmployeeService
     public async Task<EmployeeContract?> GetByIdAsync(Guid id)
     {
         using IRepositoryFactory factory = new RepositoryFactory(_db);
-        var _employeeRepository = factory.CreateEmployeeRepository();
-        var employee = await _employeeRepository.GetEmployeeByIdAsync(id);
-        if (employee == null)
+        var employeeRepository = factory.CreateEmployeeRepository();
+        var result =
+            await employeeRepository.GetEmployeeWithRolesByIdAsync(id);
+
+        if (result == null)
             return null;
-        return EmployeeContract.ToContract(
-            employee,
-            _mapper);
+        var contract =
+            EmployeeContract.ToContract(
+                result.Value.Employee,
+                _mapper);
+
+        contract.Roles = result.Value.Roles;
+
+        return contract;
     }
     public async Task<EmployeeContract> CreateAsync(
         EmployeeContract contract)
@@ -87,7 +86,7 @@ public class EmployeeService : IEmployeeService
 
         try
         {
-            
+
             var user = new ApplicationUser
             {
                 UserName = contract.Email,
@@ -148,7 +147,7 @@ public class EmployeeService : IEmployeeService
             throw;
         }
     }
-    public async Task<EmployeeContract?> UpdateAsync(Guid id,EmployeeUpdateContract contract)
+    public async Task<EmployeeContract?> UpdateAsync(Guid id, EmployeeUpdateContract contract)
     {
         using IRepositoryFactory factory = new RepositoryFactory(_db);
         var _employeeRepository = factory.CreateEmployeeRepository();

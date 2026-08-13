@@ -5,7 +5,8 @@ using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Repositories;
 using EmployeeManagement.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
+using EmployeeManagement.Exceptions;
+
 
 namespace EmployeeManagement.Services;
 
@@ -38,16 +39,16 @@ public class LeaveRequestService : ILeaveRequestService
         var employee = await employeeRepository.GetByUserIdAsync(userId);
 
         if (employee == null)
-            throw new Exception("Employee not found.");
+            throw new BusinessException("Employee not found.");
 
         var leaveType = await leaveTypeRepository.GetByIdAsync(
             contract.LeaveTypeId);
 
         if (leaveType == null)
-            throw new Exception("Leave type not found.");
+            throw new BusinessException("Leave type not found.");
 
         if (!leaveType.IsActive)
-            throw new Exception("This leave type is not active.");
+            throw new BusinessException("This leave type is not active.");
 
         ValidateDates(
             contract.StartDate,
@@ -63,8 +64,8 @@ public class LeaveRequestService : ILeaveRequestService
 
         if (days > availableDays)
         {
-            throw new Exception(
-                $"You only have {availableDays} days available for this leave type.");
+            throw new BusinessException(
+    $"You only have {availableDays} days available for this leave type.");
         }
 
         var leaveRequest = contract.ToModel(_mapper);
@@ -134,35 +135,20 @@ public class LeaveRequestService : ILeaveRequestService
         var employee = await employeeRepository.GetByUserIdAsync(userId);
 
         if (employee == null)
-            throw new Exception("Employee not found.");
+            throw new BusinessException("Employee not found.");
 
-        var requests = leaveRequestRepository.Query()
-            .Where(x => x.EmployeeId == employee.Id);
-
-        if (!string.IsNullOrWhiteSpace(query.Search))
-        {
-            var search = query.Search.Trim();
-
-            requests = requests.Where(x =>
-                x.Employee.EmployeeId.Contains(search) ||
-                x.Employee.FirstName.Contains(search) ||
-                x.Employee.LastName.Contains(search));
-        }
-
-        var totalCount = await requests.CountAsync();
-
-        var results = await requests
-            .OrderByDescending(x => x.CreatedAt)
-            .Skip((query.Page - 1) * query.PageSize)
-            .Take(query.PageSize)
-            .ToListAsync();
+        var result = await leaveRequestRepository.GetPagedByEmployeeIdAsync(
+            employee.Id,
+            query.Search,
+            query.Page,
+            query.PageSize);
 
         return new PagedResult<LeaveRequestResponse>
         {
-            Items = _mapper.Map<IEnumerable<LeaveRequestResponse>>(results),
+            Items = _mapper.Map<IEnumerable<LeaveRequestResponse>>(result.Items),
             Page = query.Page,
             PageSize = query.PageSize,
-            TotalCount = totalCount
+            TotalCount = result.TotalCount
         };
     }
 
@@ -192,17 +178,17 @@ public class LeaveRequestService : ILeaveRequestService
             return null;
 
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new Exception(
+            throw new BusinessException(
                 "Reviewed leave requests cannot be edited.");
 
         var leaveType = await leaveTypeRepository.GetByIdAsync(
             contract.LeaveTypeId);
 
         if (leaveType == null)
-            throw new Exception("Leave type not found.");
+            throw new BusinessException("Leave type not found.");
 
         if (!leaveType.IsActive)
-            throw new Exception("This leave type is not active.");
+            throw new BusinessException("This leave type is not active.");
 
         ValidateDates(
             contract.StartDate,
@@ -218,7 +204,7 @@ public class LeaveRequestService : ILeaveRequestService
 
         if (days > availableDays)
         {
-            throw new Exception(
+            throw new BusinessException(
                 $"You only have {availableDays} days available for this leave type.");
         }
 
@@ -257,7 +243,7 @@ public class LeaveRequestService : ILeaveRequestService
             return false;
 
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new Exception(
+            throw new BusinessException(
                 "Reviewed leave requests cannot be deleted.");
 
         leaveRequest.IsDeleted = true;
@@ -279,11 +265,11 @@ public class LeaveRequestService : ILeaveRequestService
         DateTime endDate)
     {
         if (endDate.Date < startDate.Date)
-            throw new Exception(
+            throw new BusinessException(
                 "End date cannot be before start date.");
 
         if (startDate.Year != endDate.Year)
-            throw new Exception(
+            throw new BusinessException(
                 "A leave request must be within the same calendar year.");
     }
     public async Task<bool> ApproveAsync(
@@ -306,7 +292,7 @@ public class LeaveRequestService : ILeaveRequestService
             return false;
 
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new Exception(
+            throw new BusinessException(
                 "Only pending leave requests can be approved.");
 
         var year = leaveRequest.StartDate.Year;
@@ -361,7 +347,7 @@ public class LeaveRequestService : ILeaveRequestService
             return false;
 
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new Exception("Only pending leave requests can be rejected.");
+            throw new BusinessException("Only pending leave requests can be rejected.");
 
         leaveRequest.Status = LeaveStatus.Rejected;
         leaveRequest.ReviewedAt = DateTime.UtcNow;
@@ -388,7 +374,7 @@ public class LeaveRequestService : ILeaveRequestService
         var employee = await employeeRepository.GetByUserIdAsync(userId);
 
         if (employee == null)
-            throw new Exception("Employee not found.");
+            throw new BusinessException("Employee not found.");
 
         var leaveTypes = await leaveTypeRepository.GetActiveAsync();
 

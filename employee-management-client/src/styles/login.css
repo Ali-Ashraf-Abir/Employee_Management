@@ -1,0 +1,256 @@
+.auth-layout {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    background:
+        radial-gradient(
+            circle at top left,
+            #e8eef8 0,
+            transparent 35%
+        ),
+        #f5f7fa;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 420px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    color: #172033;
+    font-size: 15px;
+    font-weight: 650;
+}
+
+.brand-mark {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    background: #172033;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.login-card {
+    padding: 34px;
+    background: white;
+    border: 1px solid #e3e7ee;
+    border-radius: 14px;
+    box-shadow:
+        0 10px 30px
+        rgba(20, 32, 52, 0.06);
+}
+
+.login-header {
+    margin-bottom: 28px;
+}
+
+.login-header h1 {
+    margin: 0;
+    color: #172033;
+    font-size: 27px;
+    line-height: 1.25;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+}
+
+.login-header p {
+    margin: 8px 0 0;
+    color: #6b7485;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-field label {
+    color: #30394a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.input {
+    width: 100%;
+    height: 44px;
+    padding: 0 13px;
+    border: 1px solid #d7dce5;
+    border-radius: 8px;
+    outline: none;
+    color: #172033;
+    background: white;
+    font-size: 14px;
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+    color: #a0a7b3;
+}
+
+.input:hover {
+    border-color: #b9c0cc;
+}
+
+.input:focus {
+    border-color: #52627a;
+    box-shadow:
+        0 0 0 3px
+        rgba(82, 98, 122, 0.12);
+}
+
+.input:disabled {
+    background: #f5f6f8;
+    cursor: not-allowed;
+}
+
+.password-field {
+    position: relative;
+}
+
+.password-field .input {
+    padding-right: 65px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    padding: 2px;
+    border: 0;
+    background: transparent;
+    color: #596579;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.password-toggle:hover {
+    color: #172033;
+}
+
+.login-options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: -2px;
+}
+
+.remember-me {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #5e6879;
+    font-size: 13px;
+}
+
+.remember-me input {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+    accent-color: #172033;
+}
+
+.forgot-password {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #3f4d63;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.forgot-password:hover {
+    color: #172033;
+}
+
+.button {
+    width: 100%;
+    height: 44px;
+    margin-top: 2px;
+    border: 0;
+    border-radius: 8px;
+    background: #172033;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    transition:
+        background 0.15s ease,
+        transform 0.05s ease;
+}
+
+.button:hover:not(:disabled) {
+    background: #222d43;
+}
+
+.button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.button:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.login-error {
+    padding: 11px 13px;
+    border: 1px solid #f0caca;
+    border-radius: 8px;
+    background: #fff6f6;
+    color: #a33a3a;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.field-error {
+    color: #a33a3a;
+    font-size: 12px;
+}
+
+.input-error {
+    border-color: #d66b6b;
+}
+
+.auth-footer {
+    margin: 18px 0 0;
+    color: #9aa2af;
+    text-align: center;
+    font-size: 11px;
+}
+
+@media (max-width: 480px) {
+    .auth-layout {
+        padding: 20px 14px;
+    }
+
+    .login-card {
+        padding: 26px 22px;
+    }
+
+    .login-options {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

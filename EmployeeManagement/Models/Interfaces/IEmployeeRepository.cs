@@ -8,4 +8,6 @@ public interface IEmployeeRepository
     Task<Employee?> GetByUserIdAsync(Guid userId);
     Task<Employee?> GetEmployeeByIdAsync(Guid id);
     Task<PagedData<Employee>> GetPagedAsync(string? search, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<Dictionary<Guid, List<string>>> GetRolesByUserIdsAsync(List<Guid> userIds);
+    Task<(Employee Employee, List<string> Roles)?> GetEmployeeWithRolesByIdAsync(Guid id);
 }

@@ -1,3 +1,13 @@
-.vs
-EmployeeManagement/obj
-EmployeeManagement/bin
+.vs/
+
+# .NET
+EmployeeManagement/obj/
+EmployeeManagement/bin/
+
+# Node
+**/node_modules/
+
+# Environment files
+**/.env
+**/.env.*
+!.env.example

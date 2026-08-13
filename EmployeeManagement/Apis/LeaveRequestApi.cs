@@ -51,6 +51,7 @@ public class LeaveRequestApi : ControllerBase
         return Ok(request);
     }
     [HttpGet("my-balances")]
+    [Authorize]
     public async Task<ActionResult<List<LeaveBalanceResponse>>> GetMyBalances([FromQuery] int? year)
     {
         var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -95,6 +96,7 @@ public class LeaveRequestApi : ControllerBase
         return Ok(request);
     }
     [HttpDelete("{id:guid}")]
+    [Authorize]
     public async Task<IActionResult> Delete(Guid id)
     {
         var userId = GetUserId();

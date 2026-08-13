@@ -1,0 +1,130 @@
+.attendance-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.attendance-status-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 28px;
+    background: white;
+    border: 1px solid #e3e7ee;
+    border-radius: 10px;
+}
+
+.attendance-label {
+    color: #7d8797;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.attendance-status-card h2 {
+    margin: 9px 0 0;
+    color: #172033;
+    font-size: 20px;
+    font-weight: 650;
+}
+
+.attendance-status-card p {
+    margin: 7px 0 0;
+    color: #8992a2;
+    font-size: 12px;
+}
+
+.attendance-action {
+    flex-shrink: 0;
+}
+
+.attendance-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.attendance-toolbar {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 18px;
+    border-bottom: 1px solid #e7eaf0;
+}
+
+.date-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.date-filter label {
+    color: #687386;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.date-filter input {
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #d7dce5;
+    border-radius: 7px;
+    background: white;
+    color: #4d586b;
+    font-size: 12px;
+    outline: none;
+}
+
+.date-filter input:focus {
+    border-color: #52627a;
+    box-shadow: 0 0 0 3px rgba(82, 98, 122, 0.1);
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    border-radius: 5px;
+    background: #f0f2f5;
+    color: #687386;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: #edf5ef;
+    color: #477052;
+}
+
+.table-secondary {
+    margin-top: 3px;
+    color: #929aa8;
+    font-size: 10px;
+    font-weight: 400;
+}
+
+@media (max-width: 700px) {
+    .attendance-status-card {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .attendance-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .attendance-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .attendance-toolbar .search-input,
+    .date-filter input {
+        width: 100%;
+    }
+}

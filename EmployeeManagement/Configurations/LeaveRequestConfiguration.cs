@@ -11,5 +11,7 @@ public class LeaveRequestConfiguration
         EntityTypeBuilder<LeaveRequest> entity)
     {
         entity.HasQueryFilter(x => !x.IsDeleted);
+        entity.Property(x => x.StartDate).HasColumnType("date");
+        entity.Property(x => x.EndDate).HasColumnType("date");
     }
 }
