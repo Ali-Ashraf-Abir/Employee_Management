@@ -1,7 +1,10 @@
 import {
     useNavigate
 } from "react-router-dom";
+
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "../components/notification/NotificationBell";
+
 
 interface HeaderProps {
     sidebarCollapsed: boolean;
@@ -42,7 +45,6 @@ export default function Header({
     return (
         <header className="app-header">
             <div className="header-left">
-                {/* Desktop sidebar toggle */}
                 <button
                     type="button"
                     className="sidebar-toggle desktop-sidebar-toggle"
@@ -61,7 +63,6 @@ export default function Header({
                     <span>☰</span>
                 </button>
 
-                {/* Mobile sidebar toggle */}
                 <button
                     type="button"
                     className="sidebar-toggle mobile-sidebar-toggle"
@@ -84,25 +85,29 @@ export default function Header({
                 </h2>
             </div>
 
-            <div className="header-user">
-                <div className="user-info">
-                    <span className="user-name">
-                        {displayName}
-                    </span>
+            <div className="header-right">
+                <NotificationBell />
 
-                    <span className="user-role">
-                        {user?.roles.join(", ") ||
-                            "Employee"}
-                    </span>
+                <div className="header-user">
+                    <div className="user-info">
+                        <span className="user-name">
+                            {displayName}
+                        </span>
+
+                        <span className="user-role">
+                            {user?.roles.join(", ") ||
+                                "Employee"}
+                        </span>
+                    </div>
+
+                    <button
+                        type="button"
+                        className="logout-button"
+                        onClick={handleLogout}
+                    >
+                        Sign out
+                    </button>
                 </div>
-
-                <button
-                    type="button"
-                    className="logout-button"
-                    onClick={handleLogout}
-                >
-                    Sign out
-                </button>
             </div>
         </header>
     );

@@ -6,6 +6,7 @@ using EmployeeManagement.Models;
 using EmployeeManagement.Repositories;
 using EmployeeManagement.Services.Interfaces;
 using EmployeeManagement.Exceptions;
+using EmployeeManagement.Hubs;
 
 
 namespace EmployeeManagement.Services;
@@ -15,14 +16,21 @@ public class LeaveRequestService : ILeaveRequestService
     private readonly ApplicationDbContext _db;
     private readonly IMapper _mapper;
     private readonly ILeaveBalanceService _leaveBalanceService;
+    private readonly INotificationService _notificationService;
+
+    private readonly ILogger<LeaveRequestService> _logger;
     public LeaveRequestService(
         ApplicationDbContext db,
         IMapper mapper,
-        ILeaveBalanceService leaveBalanceService)
+        ILeaveBalanceService leaveBalanceService,
+        INotificationService notificationService,
+        ILogger<LeaveRequestService> logger)
     {
         _db = db;
         _mapper = mapper;
         _leaveBalanceService = leaveBalanceService;
+        _notificationService = notificationService;
+        _logger = logger;
     }
 
     public async Task<LeaveRequestResponse> CreateAsync(
@@ -33,14 +41,21 @@ public class LeaveRequestService : ILeaveRequestService
 
         var employeeRepository = factory.CreateEmployeeRepository();
         var leaveTypeRepository = factory.CreateLeaveTypeRepository();
-        var balanceRepository = factory.CreateEmployeeLeaveBalanceRepository();
         var leaveRequestRepository = factory.CreateLeaveRequestRepository();
 
         var employee = await employeeRepository.GetByUserIdAsync(userId);
 
         if (employee == null)
             throw new BusinessException("Employee not found.");
+        var hasPendingRequest =
+            await leaveRequestRepository.HasPendingRequestAsync(
+                employee.Id);
 
+        if (hasPendingRequest)
+        {
+            throw new BusinessException(
+                "You already have a pending leave request.");
+        }
         var leaveType = await leaveTypeRepository.GetByIdAsync(
             contract.LeaveTypeId);
 
@@ -78,7 +93,12 @@ public class LeaveRequestService : ILeaveRequestService
 
         await leaveRequestRepository.AddAsync(leaveRequest);
         await leaveRequestRepository.SaveChangesAsync();
-
+        await _notificationService.NotifyHrAndAdminsAsync(
+            "New Leave Request",
+            $"{employee.FirstName} {employee.LastName} submitted a leave request.",
+            "LeaveRequestCreated",
+            leaveRequest.Id,
+            userId);
         leaveRequest.LeaveType = leaveType;
 
         return _mapper.Map<LeaveRequestResponse>(leaveRequest);
@@ -102,12 +122,28 @@ public class LeaveRequestService : ILeaveRequestService
         };
     }
     public async Task<LeaveRequestResponse?> GetByIdAsync(
-        Guid userId,
-        Guid id)
+    Guid id)
+    {
+        using var factory = new RepositoryFactory(_db);
+
+        var leaveRequestRepository =
+            factory.CreateLeaveRequestRepository();
+
+        var leaveRequest =
+            await leaveRequestRepository.GetById(id);
+
+        if (leaveRequest == null)
+            return null;
+
+        return _mapper.Map<LeaveRequestResponse>(
+            leaveRequest);
+    }
+    public async Task<LeaveRequestResponse?> GetMyByIdAsync(Guid userId, Guid id)
     {
         using var factory = new RepositoryFactory(_db);
 
         var employeeRepository = factory.CreateEmployeeRepository();
+
         var leaveRequestRepository = factory.CreateLeaveRequestRepository();
 
         var employee = await employeeRepository.GetByUserIdAsync(userId);
@@ -115,17 +151,13 @@ public class LeaveRequestService : ILeaveRequestService
         if (employee == null)
             return null;
 
-        var leaveRequest =
-            await leaveRequestRepository.GetByIdAndEmployeeIdAsync(
-                id,
-                employee.Id);
+        var leaveRequest = await leaveRequestRepository.GetByIdAndEmployeeIdAsync(id, employee.Id);
 
         if (leaveRequest == null)
             return null;
 
         return _mapper.Map<LeaveRequestResponse>(leaveRequest);
     }
-
     public async Task<PagedResult<LeaveRequestResponse>> GetMineAsync(Guid userId, PaginationQuery query)
     {
         using var factory = new RepositoryFactory(_db);
@@ -331,23 +363,43 @@ public class LeaveRequestService : ILeaveRequestService
 
         await leaveRequestRepository.SaveChangesAsync();
 
+        try
+        {
+            await _notificationService.NotifyEmployeeAsync(
+                leaveRequest.EmployeeId,
+                "Leave Request Approved",
+                "Your Leave Request Has Been Approved.",
+                "LeaveRequestApproved",
+                leaveRequest.Id,
+                adminId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send leave rejection notification for {LeaveRequestId}",
+                leaveRequest.Id);
+        }
+
         return true;
     }
-    public async Task<bool> RejectAsync(
-    Guid adminId,
-    Guid leaveRequestId)
+    public async Task<bool> RejectAsync(Guid adminId, Guid leaveRequestId)
     {
         using var factory = new RepositoryFactory(_db);
 
-        var leaveRequestRepository =factory.CreateLeaveRequestRepository();
+        var leaveRequestRepository =
+            factory.CreateLeaveRequestRepository();
 
-        var leaveRequest =await leaveRequestRepository.GetByIdAsync(leaveRequestId);
+        var leaveRequest =
+            await leaveRequestRepository.GetByIdAsync(
+                leaveRequestId);
 
         if (leaveRequest == null)
             return false;
 
         if (leaveRequest.Status != LeaveStatus.Pending)
-            throw new BusinessException("Only pending leave requests can be rejected.");
+            throw new BusinessException(
+                "Only pending leave requests can be rejected.");
 
         leaveRequest.Status = LeaveStatus.Rejected;
         leaveRequest.ReviewedAt = DateTime.UtcNow;
@@ -356,6 +408,24 @@ public class LeaveRequestService : ILeaveRequestService
         leaveRequestRepository.Update(leaveRequest);
 
         await leaveRequestRepository.SaveChangesAsync();
+
+        try
+        {
+            await _notificationService.NotifyEmployeeAsync(
+                leaveRequest.EmployeeId,
+                "Leave Request Rejected",
+                "Your Leave Request Has Been Rejected.",
+                "LeaveRequestRejected",
+                leaveRequest.Id,
+                adminId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send leave rejection notification for {LeaveRequestId}",
+                leaveRequest.Id);
+        }
 
         return true;
     }

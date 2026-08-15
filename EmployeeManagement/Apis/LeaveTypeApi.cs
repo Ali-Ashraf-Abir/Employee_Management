@@ -7,7 +7,7 @@ namespace EmployeeManagement.Apis;
 
 [ApiController]
 [Route("api/admin/leave-types")]
-[Authorize(Policy = "AdminOrHROnly")]
+
 public class LeaveTypeApi : ControllerBase
 {
     private readonly ILeaveTypeService _leaveTypeService;
@@ -27,6 +27,7 @@ public class LeaveTypeApi : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    
     public async Task<IActionResult> GetById(
         Guid id)
     {
@@ -39,6 +40,7 @@ public class LeaveTypeApi : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Create(
         LeaveTypeContract contract)
     {
@@ -49,6 +51,7 @@ public class LeaveTypeApi : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Update(Guid id,LeaveTypeUpdateContract contract)
     {
         var leaveType =await _leaveTypeService.UpdateAsync(id,contract);
@@ -59,6 +62,7 @@ public class LeaveTypeApi : ControllerBase
     }
 
     [HttpPatch("{id:guid}/disable")]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Disable(
         Guid id)
     {
@@ -71,6 +75,7 @@ public class LeaveTypeApi : ControllerBase
     }
 
     [HttpPatch("{id:guid}/enable")]
+    [Authorize(Policy = "AdminOrHROnly")]
     public async Task<IActionResult> Enable(Guid id)
     {
         var result =await _leaveTypeService.EnableAsync(id);

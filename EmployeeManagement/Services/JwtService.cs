@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace EmployeeManagement.Services;
+
 public class JwtService : IJwtService
 {
     private readonly UserManager<ApplicationUser> _userManager;
@@ -64,10 +66,22 @@ public class JwtService : IJwtService
             issuer: _configuration["Jwt:Issuer"],
             audience: _configuration["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
+            expires: DateTime.UtcNow.AddMinutes(15),
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler()
             .WriteToken(token);
+    }
+    public string GenerateRefreshToken()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(64);
+        return Convert.ToBase64String(bytes);
+    }
+    public string HashRefreshToken(string token)
+    {
+        var bytes = SHA256.HashData(
+            Encoding.UTF8.GetBytes(token));
+
+        return Convert.ToBase64String(bytes);
     }
 }

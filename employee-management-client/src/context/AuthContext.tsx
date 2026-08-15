@@ -8,12 +8,13 @@ import {
 
 import { decodeJwt } from "../utils/jwt";
 import type { AuthUser } from "../types/auth";
+import { authApi } from "../api/authApi";
 
 interface AuthContextValue {
     user: AuthUser | null;
     isAuthenticated: boolean;
-    login: (token: string) => void;
-    logout: () => void;
+    login: (accessToken: string) => void;
+    logout: () => Promise<void>;
     hasRole: (role: string) => boolean;
     hasAnyRole: (roles: string[]) => boolean;
 }
@@ -79,12 +80,13 @@ export function AuthProvider({
         );
     };
 
-    const logout = () => {
-        localStorage.removeItem(
-            "accessToken"
-        );
-
-        setUser(null);
+    const logout = async () => {
+        try {
+            await authApi.logout();
+        } finally {
+            localStorage.removeItem("accessToken");
+            setUser(null);
+        }
     };
 
     const hasRole = (role: string) => {

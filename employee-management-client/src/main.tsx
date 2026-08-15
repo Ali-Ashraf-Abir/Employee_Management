@@ -28,6 +28,8 @@ import "./styles/employee.css";
 import "./styles/attendance.css"
 import "./styles/leaveType.css"
 import "./styles/leaveRequest.css"
+import "./styles/notification.css"
+import { NotificationProvider } from "./context/NotificationContext";
 
 
 createRoot(
@@ -37,7 +39,9 @@ createRoot(
         <ErrorBoundary>
             <BrowserRouter>
                 <AuthProvider>
+                    <NotificationProvider>
                     <App />
+                    </NotificationProvider>
                 </AuthProvider>
             </BrowserRouter>
         </ErrorBoundary>

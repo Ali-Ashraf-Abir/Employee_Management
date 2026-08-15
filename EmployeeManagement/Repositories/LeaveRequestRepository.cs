@@ -2,6 +2,7 @@
 using EmployeeManagement.Data;
 using EmployeeManagement.Models;
 using EmployeeManagement.Models.Interfaces;
+using EmployeeManagement.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManagement.Repositories;
@@ -9,11 +10,15 @@ namespace EmployeeManagement.Repositories;
 public class LeaveRequestRepository
     : BaseRepository<LeaveRequest>,
       ILeaveRequestRepository
+
 {
     public LeaveRequestRepository(
-        ApplicationDbContext db)
+        ApplicationDbContext db
+
+        )
         : base(db)
     {
+
     }
 
     public async Task<List<LeaveRequest>> GetByEmployeeIdAsync(
@@ -77,7 +82,23 @@ public class LeaveRequestRepository
                 x => x.Id == id &&
                      x.EmployeeId == employeeId);
     }
-
+    public async Task<bool> HasPendingRequestAsync(
+    Guid employeeId)
+{
+    return await _collection.AnyAsync(
+        x =>
+            x.EmployeeId == employeeId &&
+            x.Status == LeaveStatus.Pending);
+}
+    public async Task<LeaveRequest?> GetById(
+        Guid id
+      )
+    {
+        return await _collection
+            .Include(x => x.LeaveType)
+            .FirstOrDefaultAsync(
+                x => x.Id == id);
+    }
     public async Task<int> GetPendingDaysAsync(
         Guid employeeId,
         Guid leaveTypeId,

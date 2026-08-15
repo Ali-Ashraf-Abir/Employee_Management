@@ -5,9 +5,7 @@ import type {
 } from "../types/auth";
 
 export const authApi = {
-    login(
-        credentials: LoginRequest
-    ) {
+    login(credentials: LoginRequest) {
         return apiClient.post<AuthResponse>(
             "/api/auth/login",
             credentials,
@@ -15,5 +13,16 @@ export const authApi = {
                 authenticated: false
             }
         );
+    },
+    logout() {
+        return apiClient.post(
+            "/api/auth/logout",
+            undefined,
+            {
+                authenticated: false,
+                skipRefresh: true
+            }
+        );
     }
+    
 };

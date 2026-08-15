@@ -202,8 +202,8 @@ function SidebarItem({
             title={item.label}
             className={({ isActive }) =>
                 isActive
-                    ? "sidebar-link active"
-                    : "sidebar-link"
+                    ? "sidebar-link sidebar-group-button active"
+                    : "sidebar-link sidebar-group-button"
             }
         >
             {Icon && (

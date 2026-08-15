@@ -1,5 +1,4 @@
 ﻿using EmployeeManagement.Contracts;
-using EmployeeManagement.Core.Contracts;
 using EmployeeManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,17 +9,20 @@ namespace EmployeeManagement.Apis;
 public class AuthApi : ControllerBase
 {
     private readonly IAuthService _authService;
+
     public AuthApi(IAuthService authService)
     {
-       _authService = authService;
+        _authService = authService;
     }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login(
         LoginContract contract)
     {
-        var response = await _authService.LoginAsync(contract);
+        var result =
+            await _authService.LoginAsync(contract);
 
-        if (response == null)
+        if (result == null)
         {
             return Unauthorized(new
             {
@@ -28,6 +30,97 @@ public class AuthApi : ControllerBase
             });
         }
 
-        return Ok(response);
+        SetRefreshTokenCookie(
+            result.RefreshToken);
+
+        return Ok(new AuthResponse
+        {
+            AccessToken = result.AccessToken
+        });
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        var refreshToken =
+            Request.Cookies["refreshToken"];
+
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            return Unauthorized(new
+            {
+                message = "Refresh token is missing."
+            });
+        }
+
+        var result =
+            await _authService.RefreshAsync(
+                refreshToken);
+
+        if (result == null)
+        {
+            DeleteRefreshTokenCookie();
+
+            return Unauthorized(new
+            {
+                message =
+                    "Invalid or expired refresh token."
+            });
+        }
+
+        SetRefreshTokenCookie(
+            result.RefreshToken);
+
+        return Ok(new AuthResponse
+        {
+            AccessToken = result.AccessToken
+        });
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var refreshToken =
+            Request.Cookies["refreshToken"];
+
+        if (!string.IsNullOrEmpty(refreshToken))
+        {
+            await _authService.LogoutAsync(
+                refreshToken);
+        }
+
+        DeleteRefreshTokenCookie();
+
+        return NoContent();
+    }
+
+    private void SetRefreshTokenCookie(
+        string refreshToken)
+    {
+        Response.Cookies.Append(
+            "refreshToken",
+            refreshToken,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires =
+                    DateTimeOffset.UtcNow.AddDays(30),
+                Path = "/api/auth"
+            });
+    }
+
+    private void DeleteRefreshTokenCookie()
+    {
+        Response.Cookies.Delete(
+            "refreshToken",
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Path = "/api/auth"
+            });
     }
 }

@@ -32,7 +32,7 @@ public static class AuthenticationExtensions
                         ValidateAudience = true,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-
+                        ClockSkew = TimeSpan.Zero,
                         ValidIssuer =
                             configuration["Jwt:Issuer"],
 

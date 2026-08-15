@@ -52,9 +52,10 @@ export default function LoginForm() {
                 await authApi.login({
                     email: email.trim(),
                     password
-                });
+                },
+            );
 
-            login(response.token);
+            login(response.accessToken);
 
             navigate("/dashboard", {
                 replace: true

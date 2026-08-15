@@ -17,11 +17,20 @@ public static class ServiceExtensions
         services.AddScoped<
             IEmployeeRepository,
             EmployeeRepository>();
-
+        services.AddScoped<
+            IAuthRepository,
+            AuthRepository>();
         services.AddScoped<
             IAuthService,
             AuthService>();
+        services.AddScoped<
+            INotificationRepository,
+            NotificationRepository>();
 
+        services.AddScoped<
+            INotificationService,
+            NotificationService>();
+            
         services.AddScoped<
             IJwtService,
             JwtService>();
@@ -31,16 +40,16 @@ public static class ServiceExtensions
             LeaveTypeService>();
 
         services.AddScoped<
-            ILeaveRequestService, 
+            ILeaveRequestService,
             LeaveRequestService>();
 
         services.AddScoped<
-            IAttendanceService, 
+            IAttendanceService,
             AttendanceService>();
         services.AddScoped<
-            ILeaveBalanceService, 
+            ILeaveBalanceService,
             LeaveBalanceService>();
-        services.AddScoped< 
+        services.AddScoped<
             EmployeeIdGenerator>();
         return services;
     }

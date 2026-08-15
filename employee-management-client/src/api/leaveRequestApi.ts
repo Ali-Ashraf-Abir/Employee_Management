@@ -8,6 +8,7 @@ import type {
 } from "../types/leaveRequest";
 
 export const leaveRequestApi = {
+    // Employee
     getMine(query?: PaginationQuery) {
         const params = new URLSearchParams();
 
@@ -23,16 +24,12 @@ export const leaveRequestApi = {
         if (query?.search)
             params.set("search", query.search);
 
-        const queryString =
-            params.toString();
+        const queryString = params.toString();
 
-        return apiClient.get<
-            PagedResult<LeaveRequest>
-        >(
-            `/api/employee/leaves${
-                queryString
-                    ? `?${queryString}`
-                    : ""
+        return apiClient.get<PagedResult<LeaveRequest>>(
+            `/api/employee/leaves${queryString
+                ? `?${queryString}`
+                : ""
             }`
         );
     },
@@ -42,6 +39,7 @@ export const leaveRequestApi = {
             `/api/employee/leaves/${id}`
         );
     },
+
 
     getBalances(year?: number) {
         const query =
@@ -54,9 +52,7 @@ export const leaveRequestApi = {
         );
     },
 
-    create(
-        data: LeaveRequestCreateRequest
-    ) {
+    create(data: LeaveRequestCreateRequest) {
         return apiClient.post<LeaveRequest>(
             "/api/employee/leaves",
             data
@@ -79,6 +75,7 @@ export const leaveRequestApi = {
         );
     },
 
+    // Admin / HR
     getAll(query?: PaginationQuery) {
         const params = new URLSearchParams();
 
@@ -94,29 +91,31 @@ export const leaveRequestApi = {
         if (query?.search)
             params.set("search", query.search);
 
-        const queryString =
-            params.toString();
+        const queryString = params.toString();
 
-        return apiClient.get<
-            PagedResult<LeaveRequest>
-        >(
-            `/api/employee/leaves/all${
-                queryString
-                    ? `?${queryString}`
-                    : ""
+        return apiClient.get<PagedResult<LeaveRequest>>(
+            `/api/leave/requests${queryString
+                ? `?${queryString}`
+                : ""
             }`
+        );
+    },
+
+    getByIdForAdmin(id: string) {
+        return apiClient.get<LeaveRequest>(
+            `/api/leave/requests/${id}`
         );
     },
 
     approve(id: string) {
         return apiClient.put<void>(
-            `/api/employee/leaves/${id}/approve`
+            `/api/leave/requests/${id}/approve`
         );
     },
 
     reject(id: string) {
         return apiClient.put<void>(
-            `/api/employee/leaves/${id}/reject`
+            `/api/leave/requests/${id}/reject`
         );
     }
 };

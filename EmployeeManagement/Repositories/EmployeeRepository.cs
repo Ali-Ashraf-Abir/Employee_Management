@@ -21,7 +21,27 @@ public class EmployeeRepository
             .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.UserId == userId);
     }
-
+    public async Task<ApplicationUser?> GetUserByEmployeeIdAsync(Guid employeeId)
+    {
+        return await _collection
+            .Where(x => x.Id == employeeId)
+            .Select(x => x.User)
+            .FirstOrDefaultAsync();
+    }
+    public async Task<List<ApplicationUser>> GetUsersByRolesAsync(List<string> roles)
+    {
+        return await (
+            from user in _db.Users
+            join userRole in _db.UserRoles
+                on user.Id equals userRole.UserId
+            join role in _db.Roles
+                on userRole.RoleId equals role.Id
+            where roles.Contains(role.Name!)
+            select user
+        )
+        .Distinct()
+        .ToListAsync();
+    }
     public async Task<Employee?> GetEmployeeByIdAsync(Guid id)
     {
         return await _collection

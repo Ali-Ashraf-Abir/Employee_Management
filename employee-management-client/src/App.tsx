@@ -42,6 +42,7 @@ import CreateLeaveRequestPage from "./pages/leaveType/CreateLeaveRequestPage";
 import LeaveRequestDetailsPage from "./pages/leaveType/LeaveRequestDetailsPage";
 import EditLeaveRequestPage from "./pages/leaveType/EditLeaveRequestPage";
 import LeaveRequestsAdminPage from "./pages/leaveType/LeaveRequestAdmin";
+import AdminLeaveRequestDetailsPage from "./pages/leaveType/AdminLeaveRequestDetailsPage";
 
 export default function App() {
     return (
@@ -102,7 +103,7 @@ export default function App() {
                         />
                     </Route>
 
-            
+
 
                     <Route element={
                         <RoleRoute
@@ -165,37 +166,12 @@ export default function App() {
                     </Route>
                     <Route
                         element={
-                            <RoleRoute
-                                allowedRoles={[
-                                    "Admin",
-                                    "HR"
-                                ]}
-                            />
-                        }
-                    >
-                        <Route
-                            path="/leave/types"
-                            element={<LeaveTypesPage />}
-                        />
-
-                        <Route
-                            path="/leave/types/new"
-                            element={
-                                <CreateLeaveTypePage />
-                            }
-                        />
-
-                        <Route
-                            path="/leave/types/:id/edit"
-                            element={
-                                <EditLeaveTypePage />
-                            }
-                        />
+                            <ProtectedRoute />
+                        }>
                         <Route
                             path="/leave"
                             element={<LeavePage />}
                         />
-
                         <Route
                             path="/leave/new"
                             element={
@@ -209,33 +185,73 @@ export default function App() {
                                 <LeaveRequestDetailsPage />
                             }
                         />
-
                         <Route
                             path="/leave/requests/:id/edit"
                             element={
                                 <EditLeaveRequestPage />
                             }
                         />
+                        <Route
+                            path="/leave/types"
+                            element={<LeaveTypesPage />}
+                        />
+                    </Route>
+                    <Route
+                        element={
+                            <RoleRoute
+                                allowedRoles={[
+                                    "Admin",
+                                    "HR"
+                                ]}
+                            />
+                        }
+                    >
+
+                        <Route
+                            path="/leave/types/:id/edit"
+                            element={
+                                <EditLeaveTypePage />
+                            }
+                        />
+                        <Route
+                            path="/leave/types/new"
+                            element={
+                                <CreateLeaveTypePage />
+                            }
+                        />
+
+
+
+
+                        <Route
+                            path="/leave/requests-admin/:id"
+                            element={
+                                <AdminLeaveRequestDetailsPage />
+                            }
+                        />
+
+
+
 
 
                     </Route>
-                     <Route
-                            element={
-                                <RoleRoute
-                                    allowedRoles={[
-                                        "Admin",
-                                        "HR"
-                                    ]}
-                                />
-                            }
-                        >
-                            <Route
-                                path="/leave/all-requests"
-                                element={
-                                    <LeaveRequestsAdminPage />
-                                }
+                    <Route
+                        element={
+                            <RoleRoute
+                                allowedRoles={[
+                                    "Admin",
+                                    "HR"
+                                ]}
                             />
-                        </Route>
+                        }
+                    >
+                        <Route
+                            path="/leave/all-requests"
+                            element={
+                                <LeaveRequestsAdminPage />
+                            }
+                        />
+                    </Route>
                 </Route>
 
             </Route>
@@ -264,7 +280,7 @@ export default function App() {
                 }
             />
 
-            <Route
+            {/* <Route
                 path="*"
                 element={
                     <Navigate
@@ -272,7 +288,7 @@ export default function App() {
                         replace
                     />
                 }
-            />
+            /> */}
 
         </Routes>
     );

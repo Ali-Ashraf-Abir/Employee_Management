@@ -34,21 +34,22 @@ public class LeaveRequestApi : ControllerBase
         return Ok(requests);
     }
 
+
     [HttpGet("{id:guid}")]
     [Authorize]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetMyLeave(Guid id)
     {
         var userId = GetUserId();
 
-        var request =
-            await _leaveRequestService.GetByIdAsync(
+        var result =
+            await _leaveRequestService.GetMyByIdAsync(
                 userId,
                 id);
 
-        if (request == null)
+        if (result == null)
             return NotFound();
 
-        return Ok(request);
+        return Ok(result);
     }
     [HttpGet("my-balances")]
     [Authorize]
@@ -111,52 +112,8 @@ public class LeaveRequestApi : ControllerBase
 
         return NoContent();
     }
-    //admin only routes
-
-    [HttpGet("all")]
-    [Authorize(Policy = "AdminOrHROnly")]
-    public async Task<IActionResult> GetAll([FromQuery] PaginationQuery query)
-    {
-        var requests = await _leaveRequestService.GetAllAsync(query);
-        return Ok(requests);
-    }
 
 
-    [HttpPut("{id:guid}/approve")]
-    [Authorize(Policy = "AdminOrHROnly")]
-    public async Task<IActionResult> Approve(Guid id)
-    {
-        var adminId = Guid.Parse(
-            User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-        var result =
-            await _leaveRequestService.ApproveAsync(
-                adminId,
-                id);
-
-        if (!result)
-            return NotFound();
-
-        return NoContent();
-    }
-
-    [HttpPut("{id:guid}/reject")]
-    [Authorize(Policy = "AdminOrHROnly")]
-    public async Task<IActionResult> Reject(Guid id)
-    {
-        var adminId = Guid.Parse(
-            User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-        var result =
-            await _leaveRequestService.RejectAsync(
-                adminId,
-                id);
-
-        if (!result)
-            return NotFound();
-
-        return NoContent();
-    }
 
     private Guid GetUserId()
     {

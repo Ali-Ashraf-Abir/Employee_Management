@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using EmployeeManagement.Extensions;
+using EmployeeManagement.Hubs;
 using EmployeeManagement.Middleware;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,9 +13,11 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
+builder.Services.AddSignalR();
 
 builder.Services.AddIdentityConfiguration();
 
@@ -37,7 +40,8 @@ builder.Services.AddSwaggerConfiguration();
 builder.Services.AddControllers();
 
 var app = builder.Build();
-
+app.MapHub<NotificationHub>(
+    "/hubs/notifications");
 await app.SeedIdentity();
 app.UseCors("Frontend");
 app.UseSwaggerConfiguration();

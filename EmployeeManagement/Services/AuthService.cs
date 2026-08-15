@@ -1,47 +1,155 @@
 ﻿using EmployeeManagement.Contracts;
 using EmployeeManagement.Models;
+using EmployeeManagement.Models.Interfaces;
 using EmployeeManagement.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
 
 namespace EmployeeManagement.Services;
+
 public class AuthService : IAuthService
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly IAuthRepository _authRepository;
     private readonly IJwtService _jwtService;
 
     public AuthService(
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
+        IAuthRepository authRepository,
         IJwtService jwtService)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
+        _authRepository = authRepository;
         _jwtService = jwtService;
     }
 
     public async Task<AuthResponse?> LoginAsync(
         LoginContract contract)
     {
-        var user = await _userManager.FindByEmailAsync(
-            contract.Email);
+        var user =
+            await _authRepository.GetUserByEmailAsync(
+                contract.Email);
 
         if (user == null)
             return null;
 
-        var result = await _signInManager.CheckPasswordSignInAsync(
-            user,
-            contract.Password,
-            lockoutOnFailure: true);
+        var validPassword =
+            await _authRepository.CheckPasswordAsync(
+                user,
+                contract.Password);
 
-        if (!result.Succeeded)
+        if (!validPassword)
             return null;
 
-        var token = await _jwtService.GenerateTokenAsync(user);
+        var accessToken =
+            await _jwtService.GenerateTokenAsync(user);
+
+        var refreshToken =
+            _jwtService.GenerateRefreshToken();
+
+        var refreshTokenEntity = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash =
+                _jwtService.HashRefreshToken(
+                    refreshToken),
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt =
+                DateTime.UtcNow.AddDays(1)
+        };
+
+        await _authRepository.AddRefreshTokenAsync(
+            refreshTokenEntity);
+
+        await _authRepository.SaveChangesAsync();
 
         return new AuthResponse
         {
-            Token = token
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
         };
+    }
+
+    public async Task<AuthResponse?> RefreshAsync(
+        string refreshToken)
+    {
+        var tokenHash =
+            _jwtService.HashRefreshToken(
+                refreshToken);
+
+        var storedToken =
+            await _authRepository.GetRefreshTokenAsync(
+                tokenHash);
+
+        if (storedToken == null ||
+            !storedToken.IsActive)
+        {
+            return null;
+        }
+        if (storedToken.User.LockoutEnd > DateTimeOffset.UtcNow)
+        {
+            await _authRepository.RevokeRefreshTokenAsync(
+                storedToken);
+
+            await _authRepository.SaveChangesAsync();
+
+            return null;
+        }
+        // Revoke old refresh token
+        await _authRepository.RevokeRefreshTokenAsync(
+            storedToken);
+
+        // Generate new refresh token
+        var newRefreshToken =
+            _jwtService.GenerateRefreshToken();
+
+        var newRefreshTokenEntity = new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = storedToken.UserId,
+            TokenHash =
+                _jwtService.HashRefreshToken(
+                    newRefreshToken),
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt =
+                DateTime.UtcNow.AddDays(1)
+        };
+
+        await _authRepository.AddRefreshTokenAsync(
+            newRefreshTokenEntity);
+
+        // Generate new access token
+        var newAccessToken =
+            await _jwtService.GenerateTokenAsync(
+                storedToken.User);
+
+        await _authRepository.SaveChangesAsync();
+
+        return new AuthResponse
+        {
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken
+        };
+    }
+
+    public async Task<bool> LogoutAsync(
+        string refreshToken)
+    {
+        var tokenHash =
+            _jwtService.HashRefreshToken(
+                refreshToken);
+
+        var storedToken =
+            await _authRepository.GetRefreshTokenAsync(
+                tokenHash);
+
+        if (storedToken == null ||
+            storedToken.IsRevoked)
+        {
+            return false;
+        }
+
+        await _authRepository.RevokeRefreshTokenAsync(
+            storedToken);
+
+        await _authRepository.SaveChangesAsync();
+
+        return true;
     }
 }

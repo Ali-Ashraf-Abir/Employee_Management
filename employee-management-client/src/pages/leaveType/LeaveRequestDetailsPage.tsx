@@ -135,28 +135,28 @@ export default function LeaveRequestDetailsPage() {
 
                 {request.status ===
                     "Pending" && (
-                    <div className="page-actions">
-                        <Link
-                            to={`/leave/requests/${request.id}/edit`}
-                            className="secondary-button"
-                        >
-                            Edit
-                        </Link>
+                        <div className="page-actions">
+                            <Link
+                                to={`/leave/requests/${request.id}/edit`}
+                                className="secondary-button"
+                            >
+                                Edit
+                            </Link>
 
-                        <button
-                            type="button"
-                            className="danger-button"
-                            disabled={deleting}
-                            onClick={
-                                handleDelete
-                            }
-                        >
-                            {deleting
-                                ? "Deleting..."
-                                : "Delete"}
-                        </button>
-                    </div>
-                )}
+                            <button
+                                type="button"
+                                className="danger-button"
+                                disabled={deleting}
+                                onClick={
+                                    handleDelete
+                                }
+                            >
+                                {deleting
+                                    ? "Deleting..."
+                                    : "Delete"}
+                            </button>
+                        </div>
+                    )}
             </div>
 
             {error && (
@@ -203,13 +203,15 @@ export default function LeaveRequestDetailsPage() {
 
                     <Detail
                         label="Duration"
-                        value={`${request.days} ${
-                            request.days === 1
-                                ? "day"
-                                : "days"
-                        }`}
+                        value={`${request.days} ${request.days === 1
+                            ? "day"
+                            : "days"
+                            }`}
                     />
-
+                    <Detail
+                        label="Reason"
+                        value={request.reason ? request.reason : ''}
+                    />
                     <Detail
                         label="Submitted"
                         value={formatDateTime(
